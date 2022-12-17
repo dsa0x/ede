@@ -1,0 +1,201 @@
+package lexer
+
+import (
+	"ede/token"
+	"unicode"
+)
+
+type Lexer struct {
+	input []byte
+	// readers func
+	currPos int
+	readPos int
+	char    byte
+	charStr string
+}
+
+func New(input string) *Lexer {
+	l := &Lexer{input: []byte(input)}
+	l.readChar()
+	return l
+}
+
+func (l *Lexer) readChar() {
+	if l.readPos >= len(l.input) {
+		l.char = byte(0)
+	} else {
+		l.char = l.input[l.readPos]
+	}
+
+	l.charStr = string(l.char)
+	l.currPos = l.readPos
+	l.readPos += 1
+}
+
+func (l *Lexer) readNChars(n int) {
+	for i := 0; i < n; i++ {
+		l.readChar()
+	}
+}
+
+func (l *Lexer) readIdent() []byte {
+	start := l.currPos
+	for l.isIdentifier(l.char) {
+		l.readChar()
+	}
+	return l.input[start:l.currPos]
+}
+
+func (l *Lexer) readDigit() []byte {
+	start := l.currPos
+	for unicode.IsDigit(rune(l.char)) {
+		l.readChar()
+	}
+	return l.input[start:l.currPos]
+}
+
+func (l *Lexer) readString() []byte {
+	l.readChar() // read the beginner
+	start := l.currPos
+	for l.char != '"' {
+		l.readChar()
+	}
+	return l.input[start:l.currPos]
+}
+
+func (l *Lexer) readReturn() []byte {
+	start := l.currPos
+	if l.peekCharIs('-') {
+		l.readChar()
+	}
+	return l.input[start:l.readPos]
+}
+
+func (l *Lexer) readSingleComment() []byte {
+	l.readNChars(2) // read '//'
+	start := l.currPos
+	for !l.peekCharIs('\n') {
+		l.readChar()
+	}
+	l.readChar()
+	return l.input[start:l.readPos]
+}
+
+func (l *Lexer) readStruct() []byte {
+	start := l.currPos
+	for unicode.IsDigit(rune(l.char)) {
+		l.readChar()
+	}
+	return l.input[start:l.currPos]
+}
+
+func (l *Lexer) peekChar() byte {
+	return l.input[l.readPos]
+}
+
+func (l *Lexer) peekCharIs(char byte) bool {
+	return l.peekChar() == char
+}
+
+func (l *Lexer) eatWhitespace() {
+	for l.isWhitespace(l.char) {
+		l.readChar()
+	}
+}
+
+func (l *Lexer) NextToken() token.Token {
+	var tok token.Token
+
+	l.eatWhitespace()
+
+	switch l.char {
+	case '=':
+		// handling ==
+		if l.peekCharIs('=') {
+			l.readChar()
+			tok = newToken(token.EQ, []byte("==")...)
+		} else {
+			tok = newToken(token.ASSIGN, l.char)
+		}
+	case ';', '{', '}', '(', ')', ',', '[', ']':
+		tok = charTokens[l.char]
+	case '+':
+		if l.peekCharIs('+') {
+			l.readChar()
+			tok = newToken(token.INC, []byte("++")...)
+			// l.readChar()
+		} else {
+			tok = newToken(token.PLUS, l.char)
+		}
+	case '-':
+		if l.peekCharIs('-') {
+			l.readChar()
+			tok = newToken(token.DEC, []byte("--")...)
+		} else {
+			tok = newToken(token.MINUS, l.char)
+		}
+	case '*':
+		tok = newToken(token.ASTERISK, l.char)
+	case '/':
+		if l.peekCharIs('/') {
+			l.readSingleComment()
+			tok = l.NextToken()
+		} else {
+			tok = newToken(token.SLASH, l.char)
+		}
+	case '!':
+		if l.peekCharIs('=') {
+			l.readChar()
+			tok = newToken(token.NEQ, []byte("!=")...)
+		} else {
+			tok = newToken(token.BANG, l.char)
+		}
+	case '>':
+		tok = newToken(token.GT, l.char)
+	case '<':
+		if l.peekCharIs('-') {
+			tok = newToken(token.RETURN, l.readReturn()...)
+		} else {
+			tok = newToken(token.LT, l.char)
+		}
+	case '"':
+		tok = newToken(token.STRING, l.readString()...)
+	case 0:
+		tok = newToken(token.EOF)
+	default:
+		if l.isIdentifier(l.char) {
+			ident := l.readIdent()
+			tokenType := token.LookupIdent(string(ident))
+			tok = newToken(tokenType, ident...)
+			return tok
+		} else if unicode.IsDigit(rune(l.char)) {
+			tok = newToken(token.INT, l.readDigit()...)
+			return tok
+		}
+	}
+
+	l.readChar()
+	return tok
+}
+
+func newToken(typ token.TokenType, literal ...byte) token.Token {
+	return token.Token{Type: typ, Literal: string(literal)}
+}
+
+func (l *Lexer) isIdentifier(char byte) bool {
+	return unicode.IsLetter(rune(char)) || char == '_'
+}
+func (l *Lexer) isWhitespace(char byte) bool {
+	return char == ' ' || char == '\t' || char == '\n'
+}
+
+var charTokens = map[byte]token.Token{
+	';': newToken(token.SEMICOLON, ';'),
+	'{': newToken(token.LBRACE, '{'),
+	'}': newToken(token.RBRACE, '}'),
+	'(': newToken(token.LPAREN, '('),
+	')': newToken(token.RPAREN, ')'),
+	'[': newToken(token.LBRACKET, '['),
+	']': newToken(token.RBRACKET, ']'),
+	',': newToken(token.COMMA, ','),
+}
