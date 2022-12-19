@@ -62,9 +62,10 @@ const (
 	FALSE       = "FALSE"
 	FOR         = "FOR"
 	RANGE       = "RANGE"
-	FOR_INDEX   = "FOR_INDEX" // for loop index
 )
 
+// IndexIdentifier is the identifier that is automatically binded
+// to the index in a loop variable
 var IndexIdentifier = "index"
 
 var keywords = map[string]TokenType{
@@ -80,6 +81,8 @@ var keywords = map[string]TokenType{
 	IndexIdentifier: IDENT,
 }
 
+// LookupIdent looks up the identifier. if it is in the map of reserved keywords,
+// the corresponding value to that key is returned, else it returns token.IDENT.
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok

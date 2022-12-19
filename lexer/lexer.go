@@ -193,14 +193,11 @@ func (l *Lexer) NextToken() token.Token {
 					fraction := l.readDigit()
 					return newToken(token.FLOAT, append(append(digit, '.'), fraction...)...)
 				}
-				// if l.peekChar() == '.' {
-				// 	l.readChar()
-				// 	fraction := l.readDigit()
-				// 	return newToken(token.RANGE, append(append(digit, fraction...), '.')...)
-				// }
 			}
 			tok = newToken(token.INT, digit...)
 			return tok
+		} else {
+			tok = newToken(token.ILLEGAL, l.char)
 		}
 	}
 

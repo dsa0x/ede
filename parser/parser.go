@@ -64,6 +64,16 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.FUNCTION] = parseFn{prefix: p.parseFunctionLiteral}
 	p.parseFns[token.ASSIGN] = parseFn{infix: p.parseReassignment}
 	p.parseFns[token.RANGE_ARRAY] = parseFn{infix: p.parseRangeArray}
+	p.registerIllegalFns()
+}
+
+func (p *Parser) registerIllegalFns() {
+	ilFn := func() ast.Expression {
+		p.errors = append(p.errors, fmt.Errorf("illegal token %s", p.currToken.Literal))
+		return nil
+	}
+	ilFn2 := func(ast.Expression) ast.Expression { return ilFn() }
+	p.parseFns[token.ILLEGAL] = parseFn{prefix: ilFn, infix: ilFn2, postfix: ilFn2}
 }
 
 func (p *Parser) Parse() *ast.Program {

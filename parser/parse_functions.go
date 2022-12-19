@@ -4,7 +4,12 @@ import (
 	"ede/ast"
 	"ede/token"
 	"fmt"
+
+	"golang.org/x/exp/slices"
 )
+
+var mathTokens = []token.TokenType{token.PLUS, token.MINUS, token.ASTERISK, token.SLASH}
+var literalTokens = []token.TokenType{token.INT, token.FLOAT, token.STRING, token.IDENT}
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.advanceToken()
@@ -38,15 +43,28 @@ func (p *Parser) parsePostfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
+	if left == nil {
+		// if it is nil, then a parse error should have been added to the internal list
+		return nil
+	}
+	operator := p.currToken
 	inf := &ast.InfixExpression{
-		Operator: p.currToken.Literal,
+		Operator: operator.Literal,
 		Left:     left,
-		Token:    p.currToken,
+		Token:    operator,
 	}
 
 	currPrecedence := p.currPrecedence()
 
 	p.advanceToken()
+	// unless the expression is an identifier, in math-like operators,
+	// the left must be of same type as the right
+	if slices.Contains(mathTokens, operator.Type) {
+		if left.TokenType() != token.IDENT && left.TokenType() != p.currToken.Type {
+			p.errors = append(p.errors, fmt.Errorf("left and right expressions do not match for operator '%s'", operator.Literal))
+			return nil
+		}
+	}
 	inf.Right = p.parseExpr(currPrecedence)
 	return inf
 }
@@ -100,11 +118,11 @@ func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
 	} else {
 		p.errors = append(p.errors, fmt.Errorf("unexpected token assignment: %s", ident.Literal()))
-		return nil
+		return &ast.ErrorStmt{Value: fmt.Sprintf("unexpected token assignment: %s", ident.Literal())}
 	}
 
 	if token.IsReservedKeyword(expr.Token.Literal) {
-		return nil
+		return &ast.ErrorStmt{Value: fmt.Sprintf("unexpected assignment of reserved keyword %s", expr.Token.Literal)}
 	}
 
 	if !p.advanceCurrTokenIs(token.ASSIGN) {
@@ -246,4 +264,12 @@ func getRawValue(expr ast.Expression) any {
 		return expr.Value
 	}
 	return nil
+}
+
+type infixPattern [3]token.TokenType
+
+var infixPatterns = []infixPattern{
+	{token.INT, token.PLUS, token.INT},
+	{token.INT, token.GT, token.INT},
+	{token.INT, token.LT, token.INT},
 }
