@@ -3,10 +3,17 @@ package object
 import (
 	"ede/ast"
 	"strings"
+
+	"golang.org/x/exp/constraints"
 )
+
+type Number interface {
+	constraints.Integer | constraints.Float
+}
 
 type String struct{ Value string }
 type Int struct{ Value int64 }
+type Float struct{ Value float64 }
 type Boolean struct{ Value bool }
 type Null struct{}
 type Error struct{ Message string }

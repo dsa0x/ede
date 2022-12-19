@@ -528,3 +528,177 @@ func TestParsingIndexExpressions(t *testing.T) {
 		return
 	}
 }
+
+func TestParsingEmptyHashLiteral(t *testing.T) {
+	input := "{}"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStmt)
+	hash, ok := stmt.Expr.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expr)
+	}
+
+	if len(hash.Pair) != 0 {
+		t.Errorf("hash.Pair has wrong length. got=%d", len(hash.Pair))
+	}
+}
+
+func TestParsingHashLiteralsStringKeys(t *testing.T) {
+	input := `{"one": 2, "one": 1, "two": 2, "three": 3}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStmt)
+	hash, ok := stmt.Expr.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expr)
+	}
+
+	expected := map[string]int64{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+
+	if len(hash.Pair) != len(expected) {
+		t.Errorf("hash.Pair has wrong length. got=%d", len(hash.Pair))
+	}
+
+	for key, value := range hash.Pair {
+		literal, ok := key.(*ast.StringLiteral)
+		if !ok {
+			t.Errorf("key is not ast.StringLiteral. got=%T", key)
+			continue
+		}
+
+		expectedValue := expected[literal.Literal()]
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingHashLiteralsBooleanKeys(t *testing.T) {
+	input := `{true: 1, false: 2}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStmt)
+	hash, ok := stmt.Expr.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expr)
+	}
+
+	expected := map[string]int64{
+		"true":  1,
+		"false": 2,
+	}
+
+	if len(hash.Pair) != len(expected) {
+		t.Errorf("hash.Pair has wrong length. got=%d", len(hash.Pair))
+	}
+
+	for key, value := range hash.Pair {
+		boolean, ok := key.(*ast.BooleanLiteral)
+		if !ok {
+			t.Errorf("key is not ast.BooleanLiteral. got=%T", key)
+			continue
+		}
+
+		expectedValue := expected[boolean.Literal()]
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingHashLiteralsIntegerKeys(t *testing.T) {
+	input := `{1: 4, 2: 2, 3: 3}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStmt)
+	hash, ok := stmt.Expr.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expr)
+	}
+
+	expected := map[string]int64{
+		"1": 4,
+		"2": 2,
+		"3": 3,
+	}
+
+	if len(hash.Pair) != len(expected) {
+		t.Errorf("hash.Pair has wrong length. got=%d", len(hash.Pair))
+	}
+
+	for key, value := range hash.Pair {
+		integer, ok := key.(*ast.IntegerLiteral)
+		if !ok {
+			t.Errorf("key is not ast.IntegerLiteral. got=%T", key)
+			continue
+		}
+
+		expectedValue := expected[integer.Literal()]
+
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingHashLiteralsWithExpressions(t *testing.T) {
+	input := `{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStmt)
+	hash, ok := stmt.Expr.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expr)
+	}
+
+	if len(hash.Pair) != 3 {
+		t.Errorf("hash.Pair has wrong length. got=%d", len(hash.Pair))
+	}
+
+	tests := map[string]func(ast.Expression){
+		"one": func(e ast.Expression) {
+			testInfixExpression(t, e, 0, "+", 1)
+		},
+		"two": func(e ast.Expression) {
+			testInfixExpression(t, e, 10, "-", 8)
+		},
+		"three": func(e ast.Expression) {
+			testInfixExpression(t, e, 15, "/", 5)
+		},
+	}
+
+	for key, value := range hash.Pair {
+		literal, ok := key.(*ast.StringLiteral)
+		if !ok {
+			t.Errorf("key is not ast.StringLiteral. got=%T", key)
+			continue
+		}
+
+		testFunc, ok := tests[literal.Literal()]
+		if !ok {
+			t.Errorf("No test function for key %q found", literal.Literal())
+			continue
+		}
+
+		testFunc(value)
+	}
+}

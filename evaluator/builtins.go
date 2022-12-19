@@ -6,9 +6,13 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": {
-		Fn: applyBuiltinLen,
-	},
+	"len":   {Fn: applyBuiltinLen},
+	"print": {Fn: applyBuiltinPrint},
+	"println": {Fn: func(args ...object.Object) object.Object {
+		applyBuiltinPrint(args...)
+		fmt.Println()
+		return NULL
+	}},
 }
 
 func applyBuiltinLen(args ...object.Object) object.Object {
@@ -23,4 +27,19 @@ func applyBuiltinLen(args ...object.Object) object.Object {
 		return &object.Int{Value: int64(len(arg.Entries))}
 	}
 	return object.NewErrorWithMsg(fmt.Sprintf("argument to `len` not supported, got %s", arg.Type()))
+}
+
+func applyBuiltinPrint(args ...object.Object) object.Object {
+	for i, arg := range args {
+		if arg == nil {
+			fmt.Println()
+		} else if arg.Inspect() == "\\n" {
+			fmt.Println()
+		} else if i == len(args)-1 {
+			fmt.Print(arg.Inspect())
+		} else {
+			fmt.Printf("%s ", arg.Inspect())
+		}
+	}
+	return NULL
 }

@@ -19,11 +19,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.String{Value: node.Value}
 	case *ast.IntegerLiteral:
 		return &object.Int{Value: node.Value}
+	case *ast.FloatLiteral:
+		return &object.Float{Value: node.Value}
 	case *ast.BooleanLiteral:
 		return &object.Boolean{Value: node.Value}
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
-	case *ast.IfExpression:
+	case *ast.IfStmt:
 		return evalIfExpression(node, env)
 	case *ast.InfixExpression:
 		left := Eval(node.Left, env)
@@ -31,7 +33,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PostfixExpression:
 		left := Eval(node.Left, env)
-		return evalPostfixExpression(node.Operator, left)
+		result := evalPostfixExpression(node.Operator, left)
+		if _, ok := node.Left.(*ast.Identifier); ok && !isError(result) { // update identifier
+			env.Set(node.Left.Literal(), result)
+		}
+		return result
 	case *ast.PrefixExpression:
 		right := Eval(node.Right, env)
 		return evalPrefixExpression(node.Operator, right)
@@ -61,36 +67,19 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		args := evalArgs(node.Args, env)
 		return applyFunction(fn, args, env)
 	case *ast.ArrayLiteral:
-		entries := make([]object.Object, len(node.Elements))
-		for i, el := range node.Elements {
-			entries[i] = Eval(el, env)
-		}
+		entries := evalArgs(node.Elements, env)
 		return &object.Array{Entries: entries}
+	case *ast.ReassignmentStmt:
+		res := Eval(node.Expr, env)
+		env.Set(node.Name.Value, res)
+		return res
+	case *ast.ForLoopStmt:
+		return evalForLoopStmt(node, env)
+	case *ast.IndexExpression:
+		return evalIndexExpression(node, env)
 	}
 
 	return nil
-}
-
-func evalProgram(node *ast.Program, env *object.Environment) object.Object {
-	var result object.Object
-
-	if len(node.ParseErrors) > 0 {
-		return object.NewError(node.ParseErrors...)
-	}
-
-	for _, stmt := range node.Statements {
-		result = Eval(stmt, env)
-		// return internal value
-		if result.Type() == object.RETURN_VALUE_OBJ {
-			return result.(*object.ReturnValue).Value
-		}
-
-		// terminate after encountering an error
-		if result.Type() == object.ERROR_OBJ {
-			return result
-		}
-	}
-	return result
 }
 
 func evalReturnExpression(node *ast.ReturnExpression, env *object.Environment) object.Object {
@@ -143,7 +132,7 @@ func evalBlockStmt(node *ast.BlockStmt, env *object.Environment) object.Object {
 	return result
 }
 
-func evalIfExpression(node *ast.IfExpression, env *object.Environment) object.Object {
+func evalIfExpression(node *ast.IfStmt, env *object.Environment) object.Object {
 	cond := Eval(node.Consequence.Condition, env)
 	if isTruthy(cond) {
 		return Eval(node.Consequence, env)
@@ -160,16 +149,26 @@ func evalIfExpression(node *ast.IfExpression, env *object.Environment) object.Ob
 	}
 	return NULL
 }
-func evalPrefixExpression(operator string, right object.Object) object.Object {
-	switch true {
-	// bang operator for all types
-	case right.Type() != object.ERROR_OBJ && operator == "!":
-		return evalBangOperator(operator, right)
-	case right.Type() == object.INT_OBJ:
-		right := right.(*object.Int)
-		return evalIntegerPrefixExpression(operator, right)
+
+func evalIndexExpression(node *ast.IndexExpression, env *object.Environment) object.Object {
+	switch left := node.Left.(type) {
+	case *ast.Identifier:
+		ident := Eval(left, env)
+		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
+			if arr, ok := ident.(*object.Array); ok {
+				return arr.Entries[index.Value]
+			}
+		}
+
+	case *ast.ArrayLiteral:
+		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
+			if int(index.Value) >= len(left.Elements) {
+				return object.NewErrorWithMsg(fmt.Sprintf("index %d out of range", index.Value))
+			}
+			return Eval(left.Elements[index.Value], env)
+		}
 	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid prefix operator %s for %s", operator, right.Inspect()))
+	return object.NewErrorWithMsg(fmt.Sprintf("invalid index operator %s for %s", node.Index.Literal(), node.Left))
 }
 
 func evalPostfixExpression(operator string, left object.Object) object.Object {
@@ -182,76 +181,16 @@ func evalPostfixExpression(operator string, left object.Object) object.Object {
 			return &object.Int{Value: left.Value - 1}
 		}
 	}
+	if left.Type() == object.FLOAT_OBJ {
+		left := left.(*object.Float)
+		switch operator {
+		case token.INC:
+			return &object.Float{Value: left.Value + 1}
+		case token.DEC:
+			return &object.Float{Value: left.Value - 1}
+		}
+	}
 	return object.NewErrorWithMsg(fmt.Sprintf("invalid postfix operator %s for %s", operator, left.Inspect()))
-}
-
-func evalIntegerPrefixExpression(operator string, right *object.Int) object.Object {
-	switch operator {
-	case "-":
-		return &object.Int{Value: -right.Value}
-	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid integer operator %s", operator))
-}
-
-func evalInfixExpression(operator string, left, right object.Object) object.Object {
-	switch true {
-	case left.Type() == object.INT_OBJ && right.Type() == object.INT_OBJ:
-		left := left.(*object.Int)
-		right := right.(*object.Int)
-		return evalIntegerInfixExpression(operator, left, right)
-	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
-		left := left.(*object.String)
-		right := right.(*object.String)
-		return evalStringInfixExpression(operator, left, right)
-	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
-		left := left.(*object.Boolean)
-		right := right.(*object.Boolean)
-		return evalBoolInfixExpression(operator, left, right)
-	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid infix operator %s for %s and %s", operator, left.Inspect(), right.Inspect()))
-}
-
-func evalIntegerInfixExpression(operator string, left, right *object.Int) object.Object {
-	switch operator {
-	case "+":
-		return &object.Int{Value: left.Value + right.Value}
-	case "-":
-		return &object.Int{Value: left.Value - right.Value}
-	case "*":
-		return &object.Int{Value: left.Value * right.Value}
-	case "/":
-		return &object.Int{Value: left.Value / right.Value}
-	case ">":
-		return booleanObj(left.Value > right.Value)
-	case "<":
-		return booleanObj(left.Value < right.Value)
-	case "==":
-		return booleanObj(left.Value == right.Value)
-	case "!=":
-		return booleanObj(left.Value != right.Value)
-	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid integer operator %s", operator))
-}
-
-func evalStringInfixExpression(operator string, left, right *object.String) object.Object {
-	switch operator {
-	case "+":
-		return &object.String{Value: left.Value + right.Value}
-	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid string operator %s", operator))
-}
-func evalBoolInfixExpression(operator string, left, right *object.Boolean) object.Object {
-	switch operator {
-	case "&&":
-		return booleanObj(left.Value && right.Value)
-	case "||":
-		return booleanObj(left.Value || right.Value)
-	case "==":
-		return booleanObj(left.Value == right.Value)
-	case "!=":
-		return booleanObj(left.Value != right.Value)
-	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid boolean operator %s", operator))
 }
 
 func evalBangOperator(operator string, right object.Object) object.Object {

@@ -4,6 +4,9 @@ import (
 	"ede/lexer"
 	"ede/object"
 	"ede/parser"
+	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -54,6 +57,20 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got=%d, want=%d",
+			result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func testFloatObject(t *testing.T, obj object.Object, expected float64) bool {
+	result, ok := obj.(*object.Float)
+	if !ok {
+		t.Errorf("object is not Integer. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%v, want=%v",
 			result.Value, expected)
 		return false
 	}
@@ -182,6 +199,22 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 	return true
 }
 
+func testObject(t *testing.T, obj object.Object, evaluated any) bool {
+	switch evaluated := evaluated.(type) {
+	case int, int32, int64, uint:
+		ev, _ := strconv.ParseInt(fmt.Sprint(evaluated), 10, 64)
+		return testIntegerObject(t, obj, ev)
+	case float32, float64:
+		ev, _ := strconv.ParseFloat(fmt.Sprint(evaluated), 64)
+		return testFloatObject(t, obj, ev)
+	case nil:
+		return obj.Type() == object.NULL_OBJ
+	case error:
+		return obj.Type() == object.ERROR_OBJ && obj.Inspect() == evaluated.Error()
+	}
+	return false
+}
+
 func TestReturnStatements(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -245,17 +278,7 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("one", "two")`, "builtin function 'len' requires exactly one argument, got 2"},
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
-		// {`puts("hello", "world!")`, nil},
-		// {`first([1, 2, 3])`, 1},
-		// {`first([])`, nil},
-		// {`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
-		// {`last([1, 2, 3])`, 3},
-		// {`last([])`, nil},
-		// {`last(1)`, "argument to `last` must be ARRAY, got INTEGER"},
-		// {`rest([1, 2, 3])`, []int{2, 3}},
-		// {`rest([])`, nil},
-		// {`push([], 1)`, []int{1}},
-		// {`push(1, 1)`, "argument to `push` must be ARRAY, got INTEGER"},
+		{`println("hello", "world!")`, nil},
 	}
 
 	for _, tt := range tests {
@@ -277,22 +300,161 @@ func TestBuiltinFunctions(t *testing.T) {
 				t.Errorf("wrong error message. expected=%q, got=%q",
 					expected, errObj.Message)
 			}
-			// case []int:
-			// 	array, ok := evaluated.(*object.Array)
-			// 	if !ok {
-			// 		t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
-			// 		continue
-			// 	}
+		case []int:
+			array, ok := evaluated.(*object.Array)
+			if !ok {
+				t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
+				continue
+			}
 
-			// 	if len(array.Elements) != len(expected) {
-			// 		t.Errorf("wrong num of elements. want=%d, got=%d",
-			// 			len(expected), len(array.Elements))
-			// 		continue
-			// 	}
+			if len(array.Entries) != len(expected) {
+				t.Errorf("wrong num of elements. want=%d, got=%d",
+					len(expected), len(array.Entries))
+				continue
+			}
 
-			// 	for i, expectedElem := range expected {
-			// 		testIntegerObject(t, array.Elements[i], int64(expectedElem))
-			// 	}
+			for i, expectedElem := range expected {
+				testIntegerObject(t, array.Entries[i], int64(expectedElem))
+			}
 		}
+	}
+}
+
+func TestEvalStatements(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `let a = 10;
+		let add = func(x) {
+			print("a", a, "\n");
+			<- x + a;
+		};
+		add(add(10));
+		`,
+			result: 30,
+		},
+		{
+			input: `let a = 10;
+			let add = func(x) {
+				<- x + a;
+			};
+			a = add(add(10));
+			a + a;
+		`,
+			result: 60,
+		},
+		{
+			input: `let a = 10;
+			let add = func(x) {
+				<- x + a;
+			};
+			a = add(add(10));
+			add(a + a) + add(a + a);
+		`,
+			result: 180,
+		},
+		{
+			input: `let a = 10.5;
+			let add = func(x) {
+				<- x + a;
+			};
+			a = add(add(10));
+			a;
+		`,
+			result: 31.0,
+		},
+		{
+			input: `
+			let arr = [1..10];
+			arr[2];
+		`,
+			result: 3,
+		},
+		{
+			input: `
+			let name = "foo";
+			let age = 10.5;
+			for i = range [1..10] {
+				age++;
+			};
+			age;
+		`,
+			result: 20.5,
+		},
+		{
+			input: `
+			let name = "foo";
+			let age = 30;
+			for i = range [1..3] {
+				age = age + i;
+			};
+			age;
+		`,
+			result: 36,
+		},
+		{
+			input: `let sub;
+			sub;
+		`,
+			result: nil,
+		},
+		{
+			input: `
+			let subjects = ["english", "french"];
+			for sub = range subjects {
+				println(index, sub);
+			};
+		`,
+			result: nil,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if !testObject(t, evaluated, tt.result) {
+				t.FailNow()
+			}
+		})
+	}
+}
+func TestEvalStatements_Error(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `let index = foo;
+			let subjects = ["english", "french"];
+		`,
+			result: errors.New("cannot assign to reserved keyword 'index'"),
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if !testObject(t, evaluated, tt.result) {
+				t.FailNow()
+			}
+		})
+	}
+}
+func TestEval(t *testing.T) {
+	input := `let a = 10;
+	let add = func(x) {
+		<- x + a;
+	};
+	a = add(add(10.5));
+	a + a;
+	`
+
+	evaluated := testEval(input)
+	if !testObject(t, evaluated, 61.0) {
+		t.FailNow()
 	}
 }

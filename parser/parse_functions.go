@@ -3,24 +3,8 @@ package parser
 import (
 	"ede/ast"
 	"ede/token"
-	"strconv"
+	"fmt"
 )
-
-func (p *Parser) parseInteger() ast.Expression {
-	expr := &ast.IntegerLiteral{}
-
-	val, _ := strconv.Atoi(p.currToken.Literal)
-	expr.Value = int64(val)
-	return expr
-}
-
-func (p *Parser) parseBool() ast.Expression {
-	expr := &ast.BooleanLiteral{}
-
-	val, _ := strconv.ParseBool(p.currToken.Literal)
-	expr.Value = val
-	return expr
-}
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.advanceToken()
@@ -72,11 +56,6 @@ func (p *Parser) parseIdent() ast.Expression {
 	return &ast.Identifier{Value: tok.Literal, Token: tok}
 }
 
-func (p *Parser) parseStringLiteral() ast.Expression {
-	tok := p.currToken
-	return &ast.StringLiteral{Value: tok.Literal, Token: tok}
-}
-
 func (p *Parser) parseFunctionLiteral() ast.Expression {
 	stmt := &ast.FunctionLiteral{Token: p.currToken}
 	if !p.advanceNextTokenIs(token.LPAREN) {
@@ -115,6 +94,51 @@ func (p *Parser) parseFunctionParams() []*ast.Identifier {
 	return identifiers
 }
 
+func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
+	var expr *ast.ReassignmentStmt
+	if id, ok := ident.(*ast.Identifier); ok {
+		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
+	} else {
+		p.errors = append(p.errors, fmt.Errorf("unexpected token assignment: %s", ident.Literal()))
+		return nil
+	}
+
+	if token.IsReservedKeyword(expr.Token.Literal) {
+		return nil
+	}
+
+	if !p.advanceCurrTokenIs(token.ASSIGN) {
+		return nil
+	}
+	expr.Expr = p.parseExpr(LOWEST)
+	p.advanceNextTokenIs(token.SEMICOLON)
+	return expr
+}
+
+func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
+	startL, ok := start.(*ast.IntegerLiteral)
+	if !ok {
+		return nil
+	}
+	expr := &ast.ArrayLiteral{Token: p.currToken, Elements: make([]ast.Expression, 0)}
+	if !p.advanceNextTokenIs(token.INT) {
+		return nil
+	}
+	end := p.parseExpr(LOWEST)
+	endL, ok := end.(*ast.IntegerLiteral)
+	if !ok {
+		return nil
+	}
+	for i := startL.Value; i <= endL.Value; i++ {
+		expr.Elements = append(expr.Elements, &ast.IntegerLiteral{Value: i})
+	}
+	if !p.nextTokenIs(token.LBRACE) && !p.nextTokenIs(token.RBRACKET) { // TODO: usage in forloop and array literal should be diff
+		return nil
+	}
+	p.advanceToken()
+	return expr
+}
+
 func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 	expr := &ast.CallExpression{Function: fn, Token: p.currToken}
 
@@ -132,7 +156,47 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 	if !p.advanceCurrTokenIs(token.LBRACKET) {
 		return nil
 	}
+
+	// if the array uses range array e.g. [1..10]
+	if p.nextTokenIs(token.RANGE_ARRAY) {
+		start := p.parseInteger()
+		p.advanceToken() // advance the range array
+		return p.parseRangeArray(start)
+	}
+	// else if it is a normal array literal
 	expr.Elements = p.parseArguments(token.RBRACKET)
+	p.advanceNextTokenIs(token.SEMICOLON)
+	return expr
+}
+
+func (p *Parser) parseHashLiteral() ast.Expression {
+	expr := &ast.HashLiteral{Token: p.currToken, Pair: make(map[ast.Expression]ast.Expression)}
+
+	keySet := map[any]ast.Expression{}
+	if !p.advanceCurrTokenIs(token.LBRACE) {
+		return nil
+	}
+	for !p.currTokenIs(token.EOF) && !p.currTokenIs(token.RBRACE) {
+		key := p.parseExpr(LOWEST)
+		rawValue := getRawValue(key)
+		if rawValue == nil {
+			p.errors = append(p.errors, fmt.Errorf("invalid type %T for hash key", key))
+			return nil
+		}
+		// if the key exists, delete it so it is overwritten by the new token
+		if key, ok := keySet[rawValue]; ok {
+			delete(expr.Pair, key)
+		}
+		keySet[rawValue] = key
+		p.advanceToken()
+		if !p.advanceCurrTokenIs(token.COLON) {
+			return nil
+		}
+		expr.Pair[key] = p.parseExpr(LOWEST)
+
+		p.advanceNextTokenIs(token.COMMA)
+		p.advanceToken()
+	}
 	p.advanceNextTokenIs(token.SEMICOLON)
 	return expr
 }
@@ -154,17 +218,32 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseArguments(endToken token.TokenType) []ast.Expression {
 	exprs := make([]ast.Expression, 0)
 
-	// if no function args
-	if p.advanceCurrTokenIs(endToken) {
+	// if no args
+	if p.currTokenIs(endToken) {
 		return exprs
 	}
 
 	for !p.currTokenIs(token.EOF) && !p.currTokenIs(endToken) {
 		exprs = append(exprs, p.parseExpr(LOWEST))
 
-		p.advanceNextTokenIs(token.COMMA)
+		if !p.advanceNextTokenIs(token.COMMA) && !p.nextTokenIs(endToken) {
+			p.errors = append(p.errors, fmt.Errorf("unexpected end of token. expected %s, got %s", endToken, p.nextToken.Literal))
+			return nil
+		}
 		p.advanceToken()
 	}
 
 	return exprs
+}
+
+func getRawValue(expr ast.Expression) any {
+	switch expr := expr.(type) {
+	case *ast.StringLiteral:
+		return expr.Value
+	case *ast.IntegerLiteral:
+		return expr.Value
+	case *ast.BooleanLiteral:
+		return expr.Value
+	}
+	return nil
 }

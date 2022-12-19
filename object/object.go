@@ -8,6 +8,7 @@ var (
 	STRING_OBJ       Type = "STRING"
 	BOOLEAN_OBJ      Type = "BOOLEAN"
 	INT_OBJ          Type = "INT"
+	FLOAT_OBJ        Type = "FLOAT"
 	FUNCTION_OBJ     Type = "FUNCTION"
 	ERROR_OBJ        Type = "ERROR"
 	NULL_OBJ         Type = "NULL"
@@ -23,6 +24,7 @@ type Object interface {
 
 func (*String) Type() Type      { return STRING_OBJ }
 func (*Int) Type() Type         { return INT_OBJ }
+func (*Float) Type() Type       { return FLOAT_OBJ }
 func (*Boolean) Type() Type     { return BOOLEAN_OBJ }
 func (*Error) Type() Type       { return ERROR_OBJ }
 func (*Null) Type() Type        { return NULL_OBJ }
@@ -33,6 +35,7 @@ func (*Array) Type() Type       { return ARRAY_OBJ }
 
 func (v *String) Inspect() string      { return v.Value }
 func (v *Int) Inspect() string         { return fmt.Sprint(v.Value) }
+func (v *Float) Inspect() string       { return fmt.Sprint(v.Value) }
 func (v *Boolean) Inspect() string     { return fmt.Sprint(v.Value) }
 func (v *Error) Inspect() string       { return fmt.Sprint(v.Message) }
 func (v *Null) Inspect() string        { return "null" }

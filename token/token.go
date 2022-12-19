@@ -17,6 +17,7 @@ const (
 	IDENT   = "IDENT"   // let, if, for, etc
 	BUILTIN = "BUILTIN" // print, len, etc
 	INT     = "INT"     // 1, 2, 3
+	FLOAT   = "FLOAT"   // 1.6
 	STRING  = "STRING"
 
 	// Operators
@@ -36,6 +37,7 @@ const (
 	// Delimiters
 	COMMA     = ","
 	SEMICOLON = ";"
+	COLON     = ":"
 
 	LPAREN   = "("
 	RPAREN   = ")"
@@ -45,6 +47,7 @@ const (
 	RBRACKET = "]"
 
 	SINGLE_COMMENT = "//"
+	RANGE_ARRAY    = "RANGE_ARRAY" // 1..10
 
 	// Keywords
 	FUNCTION    = "FUNCTION"
@@ -57,16 +60,24 @@ const (
 	RETURN      = "RETURN"
 	TRUE        = "TRUE"
 	FALSE       = "FALSE"
+	FOR         = "FOR"
+	RANGE       = "RANGE"
+	FOR_INDEX   = "FOR_INDEX" // for loop index
 )
 
+var IndexIdentifier = "index"
+
 var keywords = map[string]TokenType{
-	"func":   FUNCTION,
-	"struct": STRUCT,
-	"let":    LET,
-	"if":     IF,
-	"else":   ELSE,
-	"true":   TRUE,
-	"false":  FALSE,
+	"func":          FUNCTION,
+	"struct":        STRUCT,
+	"let":           LET,
+	"if":            IF,
+	"else":          ELSE,
+	"true":          TRUE,
+	"false":         FALSE,
+	"for":           FOR,
+	"range":         RANGE,
+	IndexIdentifier: IDENT,
 }
 
 func LookupIdent(ident string) TokenType {
@@ -74,4 +85,9 @@ func LookupIdent(ident string) TokenType {
 		return tok
 	}
 	return IDENT
+}
+
+func IsReservedKeyword(ident string) bool {
+	_, isReserved := keywords[ident]
+	return isReserved
 }

@@ -1,0 +1,10 @@
+let name = "foo";
+let age = 10.5;
+let subjects = ["english", "french"];
+
+for i = range 1..10 {
+    age++;
+};
+
+println("name is", name, "and age is", age);
+// println(name, "is taking", len(subjects) "subjects");

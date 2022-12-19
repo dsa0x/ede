@@ -41,6 +41,7 @@ func (l *Lexer) readNChars(n int) {
 func (l *Lexer) readIdent() []byte {
 	start := l.currPos
 	for l.isIdentifier(l.char) {
+		// if l.char == 34
 		l.readChar()
 	}
 	return l.input[start:l.currPos]
@@ -74,7 +75,7 @@ func (l *Lexer) readReturn() []byte {
 func (l *Lexer) readSingleComment() []byte {
 	l.readNChars(2) // read '//'
 	start := l.currPos
-	for !l.peekCharIs('\n') {
+	for !(l.peekCharIs(';') || l.peekCharIs('\n')) {
 		l.readChar()
 	}
 	l.readChar()
@@ -90,7 +91,14 @@ func (l *Lexer) readStruct() []byte {
 }
 
 func (l *Lexer) peekChar() byte {
+	if l.readPos >= len(l.input) {
+		return '0'
+	}
 	return l.input[l.readPos]
+}
+
+func (l *Lexer) currCharIs(char byte) bool {
+	return l.char == char
 }
 
 func (l *Lexer) peekCharIs(char byte) bool {
@@ -117,13 +125,12 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.ASSIGN, l.char)
 		}
-	case ';', '{', '}', '(', ')', ',', '[', ']':
+	case ';', '{', '}', '(', ')', ',', '[', ']', ':':
 		tok = charTokens[l.char]
 	case '+':
 		if l.peekCharIs('+') {
 			l.readChar()
 			tok = newToken(token.INC, []byte("++")...)
-			// l.readChar()
 		} else {
 			tok = newToken(token.PLUS, l.char)
 		}
@@ -138,8 +145,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.ASTERISK, l.char)
 	case '/':
 		if l.peekCharIs('/') {
-			l.readSingleComment()
-			tok = l.NextToken()
+			byt := l.readSingleComment()
+			tok = newToken(token.SINGLE_COMMENT, byt...)
 		} else {
 			tok = newToken(token.SLASH, l.char)
 		}
@@ -162,6 +169,11 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.STRING, l.readString()...)
 	case 0:
 		tok = newToken(token.EOF)
+	case '.':
+		if l.peekCharIs('.') {
+			l.readChar()
+			tok = newToken(token.RANGE_ARRAY, '.', '.')
+		}
 	default:
 		if l.isIdentifier(l.char) {
 			ident := l.readIdent()
@@ -169,7 +181,25 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(tokenType, ident...)
 			return tok
 		} else if unicode.IsDigit(rune(l.char)) {
-			tok = newToken(token.INT, l.readDigit()...)
+			digit := l.readDigit()
+			if l.currCharIs('.') {
+				// if it is not float or list, then it's invalid
+				if !(l.peekCharIs('.') || unicode.IsDigit(rune(l.peekChar()))) {
+					// TODO: communicate error
+					return newToken(token.ILLEGAL, l.peekChar())
+				}
+				if unicode.IsDigit(rune(l.peekChar())) {
+					l.readChar()
+					fraction := l.readDigit()
+					return newToken(token.FLOAT, append(append(digit, '.'), fraction...)...)
+				}
+				// if l.peekChar() == '.' {
+				// 	l.readChar()
+				// 	fraction := l.readDigit()
+				// 	return newToken(token.RANGE, append(append(digit, fraction...), '.')...)
+				// }
+			}
+			tok = newToken(token.INT, digit...)
 			return tok
 		}
 	}
@@ -198,4 +228,5 @@ var charTokens = map[byte]token.Token{
 	'[': newToken(token.LBRACKET, '['),
 	']': newToken(token.RBRACKET, ']'),
 	',': newToken(token.COMMA, ','),
+	':': newToken(token.COLON, ':'),
 }
