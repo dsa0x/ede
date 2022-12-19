@@ -4,7 +4,6 @@ import (
 	"ede/lexer"
 	"ede/object"
 	"ede/parser"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -266,6 +265,59 @@ func TestReturnStatements(t *testing.T) {
 	}
 }
 
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let identity = func(x) { x; }; identity(5);", 5},
+		{"let identity = func(x) { return x; }; identity(5);", 5},
+		{"let double = func(x) { x * 2; }; double(5);", 10},
+		{"let add = func(x, y) { x + y; }; add(5, 5);", 10},
+		{"let add = func(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"func(x) { x + x; }(5)", 10},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			testIntegerObject(t, testEval(tt.input), tt.expected)
+		})
+	}
+}
+
+func TestEnclosingEnvironments(t *testing.T) {
+	input := `
+	let first = 10;
+	let second = 10;
+	let third = 10;
+
+	let ourFunction = func(first) {
+	let second = 20;
+
+	first + second + third;
+	};
+
+	ourFunction(20) + first + second;`
+
+	if !testIntegerObject(t, testEval(input), 70) {
+		t.FailNow()
+	}
+}
+
+func TestClosures(t *testing.T) {
+	input := `
+	let newAdder = func(x) {
+	func(y) { x + y };
+	};
+
+	let addTwo = newAdder(2);
+	addTwo(2);`
+
+	if !testObject(t, testEval(input), 4) {
+		t.FailNow()
+	}
+}
+
 func TestBuiltinFunctions(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -279,6 +331,16 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
 		{`println("hello", "world!")`, nil},
+		// {`first([1, 2, 3])`, 1},
+		// {`first([])`, nil},
+		// {`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
+		// {`last([1, 2, 3])`, 3},
+		// {`last([])`, nil},
+		// {`last(1)`, "argument to `last` must be ARRAY, got INTEGER"},
+		// {`rest([1, 2, 3])`, []int{2, 3}},
+		// {`rest([])`, nil},
+		// {`push([], 1)`, []int{1}},
+		// {`push(1, 1)`, "argument to `push` must be ARRAY, got INTEGER"},
 	}
 
 	for _, tt := range tests {
@@ -301,7 +363,7 @@ func TestBuiltinFunctions(t *testing.T) {
 					expected, errObj.Message)
 			}
 		case []int:
-			array, ok := evaluated.(*object.Array)
+			array, ok := evaluated.(*object.Array[any])
 			if !ok {
 				t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
 				continue
@@ -327,9 +389,10 @@ func TestEvalStatements(t *testing.T) {
 		result any
 	}{
 		{
-			input: `let a = 10;
+			input: `
+			let a = 10;
 		let add = func(x) {
-			print("a", a, "\n");
+			println("a", a);
 			<- x + a;
 		};
 		add(add(10));
@@ -425,36 +488,77 @@ func TestEvalStatements_Error(t *testing.T) {
 
 	tests := []struct {
 		input  string
-		result any
+		result string
 	}{
 		{
 			input: `let index = foo;
 			let subjects = ["english", "french"];
 		`,
-			result: errors.New("cannot assign to reserved keyword 'index'"),
+			result: "cannot assign to reserved keyword 'index'",
+		},
+		{
+			input: `let arr = [2, ( + 5];
+		`,
+			result: "expected closing parenthesis token ')', got '5'",
+		},
+		{
+			input: `let arr = [2, 3 +];
+		`,
+			result: "invalid right expression ] for operator '+'",
+		},
+		{
+			input: `let arr = [2, | +];
+		`,
+			result: "illegal token |",
+		},
+		{
+			input: `let arr = [2;
+		`,
+			result: "expected closing bracket token ']', got '2'",
+		},
+		{
+			input: `
+			a = 24;
+			println(a);
+		`,
+			result: "cannot reassign undeclared identifier 'a'",
 		},
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			evaluated := testEval(tt.input)
-			if !testObject(t, evaluated, tt.result) {
-				t.FailNow()
+			ev := testEval(tt.input)
+			evaluated, ok := ev.(*object.Error)
+			if !ok {
+				t.Fatalf("expected result of type *object.Error, got %T", evaluated)
+			}
+			if !strings.Contains(evaluated.Message, tt.result) {
+				t.Fatalf("expected \"%s\" to contain error \"%s\"", evaluated.Message, tt.result)
 			}
 		})
 	}
 }
+
 func TestEval(t *testing.T) {
-	input := `let a = 10;
-	let add = func(x) {
-		<- x + a;
+	input := `
+	let arr = [1..10];
+	let double = func(x) {
+		<- x + x;
 	};
-	a = add(add(10.5));
-	a + a;
+	arr.push(5);
+	// let arrx = arr.map(double);
+	// arrx[1]
+	println(arr);
+	`
+
+	input = `
+	let arr = [1,2];
+	arr.push(5);
+	println(arr);
 	`
 
 	evaluated := testEval(input)
-	if !testObject(t, evaluated, 61.0) {
+	if !testObject(t, evaluated, 2) {
 		t.FailNow()
 	}
 }

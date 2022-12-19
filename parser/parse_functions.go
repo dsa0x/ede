@@ -9,16 +9,29 @@ import (
 )
 
 var mathTokens = []token.TokenType{token.PLUS, token.MINUS, token.ASTERISK, token.SLASH}
-var literalTokens = []token.TokenType{token.INT, token.FLOAT, token.STRING, token.IDENT}
+var literalTokens = []token.TokenType{token.INT, token.FLOAT, token.STRING}
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.advanceToken()
 	expr := p.parseExpr(LOWEST)
 	if !p.advanceNextTokenIs(token.RPAREN) {
+		p.addError("expected closing parenthesis token ')', got '%s'", p.currToken.Literal)
 		return nil
 	}
 	return expr
 }
+
+func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
+	expr := &ast.ObjectMethodExpression{Token: p.currToken, Object: obj}
+	p.advanceToken()
+	if !p.currTokenIs(token.IDENT) {
+		return nil
+	}
+	expr.Method = p.parseExpr(LOWEST)
+	p.advanceNextTokenIs(token.SEMICOLON)
+	return expr
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	expr := &ast.PrefixExpression{
 		Operator: p.currToken.Literal,
@@ -57,15 +70,16 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 	currPrecedence := p.currPrecedence()
 
 	p.advanceToken()
-	// unless the expression is an identifier, in math-like operators,
-	// the left must be of same type as the right
-	if slices.Contains(mathTokens, operator.Type) {
-		if left.TokenType() != token.IDENT && left.TokenType() != p.currToken.Type {
-			p.errors = append(p.errors, fmt.Errorf("left and right expressions do not match for operator '%s'", operator.Literal))
-			return nil
-		}
+	if slices.Contains([]token.TokenType{token.LBRACE, token.LBRACKET}, left.TokenType()) {
+		p.errors = append(p.errors, fmt.Errorf("invalid left expression %s for operator '%s'", left.TokenType(), operator.Literal))
+		return nil
 	}
-	inf.Right = p.parseExpr(currPrecedence)
+
+	if inf.Right = p.parseExpr(currPrecedence); inf.Right == nil {
+		// if we couldn't parse the right
+		p.errors = append(p.errors, fmt.Errorf("invalid right expression %s for operator '%s'", p.currToken.Literal, operator.Literal))
+		return nil
+	}
 	return inf
 }
 
@@ -88,7 +102,11 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 
 	stmt.Body = p.parseBlockStmt()
 
-	p.advanceNextTokenIs(token.SEMICOLON)
+	// if the literal is called immediately
+	if p.currTokenIs(token.LPAREN) {
+		return p.parseCallExpression(stmt)
+	}
+
 	return stmt
 }
 
@@ -117,12 +135,13 @@ func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 	if id, ok := ident.(*ast.Identifier); ok {
 		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
 	} else {
-		p.errors = append(p.errors, fmt.Errorf("unexpected token assignment: %s", ident.Literal()))
-		return &ast.ErrorStmt{Value: fmt.Sprintf("unexpected token assignment: %s", ident.Literal())}
+		p.addError("unexpected token assignment: %s", ident.Literal())
+		return nil
 	}
 
 	if token.IsReservedKeyword(expr.Token.Literal) {
-		return &ast.ErrorStmt{Value: fmt.Sprintf("unexpected assignment of reserved keyword %s", expr.Token.Literal)}
+		p.addError("unexpected assignment of reserved keyword %s", expr.Token.Literal)
+		return nil
 	}
 
 	if !p.advanceCurrTokenIs(token.ASSIGN) {
@@ -164,25 +183,9 @@ func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 		return nil
 	}
 	expr.Args = p.parseArguments(token.RPAREN)
-	p.advanceNextTokenIs(token.SEMICOLON)
-	return expr
-}
-
-func (p *Parser) parseArrayLiteral() ast.Expression {
-	expr := &ast.ArrayLiteral{Token: p.currToken}
-
-	if !p.advanceCurrTokenIs(token.LBRACKET) {
-		return nil
+	if expr.Args == nil {
+		p.addError("expected closing parenthesis token ')', got '%s'", p.currToken.Literal)
 	}
-
-	// if the array uses range array e.g. [1..10]
-	if p.nextTokenIs(token.RANGE_ARRAY) {
-		start := p.parseInteger()
-		p.advanceToken() // advance the range array
-		return p.parseRangeArray(start)
-	}
-	// else if it is a normal array literal
-	expr.Elements = p.parseArguments(token.RBRACKET)
 	p.advanceNextTokenIs(token.SEMICOLON)
 	return expr
 }
@@ -214,20 +217,6 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 
 		p.advanceNextTokenIs(token.COMMA)
 		p.advanceToken()
-	}
-	p.advanceNextTokenIs(token.SEMICOLON)
-	return expr
-}
-
-func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
-	expr := &ast.IndexExpression{Left: left, Token: p.currToken}
-
-	if !p.advanceCurrTokenIs(token.LBRACKET) {
-		return nil
-	}
-	expr.Index = p.parseExpr(LOWEST)
-	if !p.advanceNextTokenIs(token.RBRACKET) {
-		return nil
 	}
 	p.advanceNextTokenIs(token.SEMICOLON)
 	return expr

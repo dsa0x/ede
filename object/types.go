@@ -19,15 +19,15 @@ type Null struct{}
 type Error struct{ Message string }
 type ReturnValue struct{ Value Object }
 type Function struct {
-	Params []*ast.Identifier
-	Body   *ast.BlockStmt
+	Params    []*ast.Identifier
+	Body      *ast.BlockStmt
+	ParentEnv *Environment
 }
 type BuiltinFn func(args ...Object) Object
 type Builtin struct{ Fn BuiltinFn }
-type Array struct{ Entries []Object }
 
 func NewErrorWithMsg(msgs ...string) *Error {
-	return &Error{Message: strings.Join(msgs, ", ")}
+	return &Error{Message: strings.Join(msgs, "; ")}
 }
 
 func NewError(msgs ...error) *Error {

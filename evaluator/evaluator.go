@@ -43,6 +43,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.ReturnExpression:
 		return evalReturnExpression(node, env)
+	case *ast.IndexExpression:
+		return evalIndexExpression(node, env)
 	case *ast.Program:
 		return evalProgram(node, env)
 	case *ast.LetStmt:
@@ -58,25 +60,28 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.ConditionalStmt:
 		return Eval(node.Statement, env)
 	case *ast.FunctionLiteral:
-		return &object.Function{Body: node.Body, Params: node.Params}
+		return &object.Function{Body: node.Body, Params: node.Params, ParentEnv: env}
 	case *ast.CallExpression:
 		fn := Eval(node.Function, env)
 		if isError(fn) {
 			return fn
 		}
 		args := evalArgs(node.Args, env)
-		return applyFunction(fn, args, env)
+		return applyFunction(fn, args)
 	case *ast.ArrayLiteral:
 		entries := evalArgs(node.Elements, env)
-		return &object.Array{Entries: entries}
+		return &object.Array[any]{Entries: entries}
 	case *ast.ReassignmentStmt:
+		if _, found := env.Get(node.Name.Value); !found {
+			return object.NewErrorWithMsg(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value))
+		}
 		res := Eval(node.Expr, env)
 		env.Set(node.Name.Value, res)
 		return res
 	case *ast.ForLoopStmt:
 		return evalForLoopStmt(node, env)
-	case *ast.IndexExpression:
-		return evalIndexExpression(node, env)
+	case *ast.ObjectMethodExpression:
+		return evalObjectMethodExpr[any](node, env)
 	}
 
 	return nil
@@ -93,10 +98,10 @@ func evalReturnExpression(node *ast.ReturnExpression, env *object.Environment) o
 
 // evalArgs evaluates arguments
 func evalArgs(args []ast.Expression, env *object.Environment) []object.Object {
-	result := make([]object.Object, len(args))
+	result := make([]object.Object, 0, len(args))
 
 	for i, arg := range args {
-		result[i] = Eval(arg, env)
+		result = append(result, Eval(arg, env))
 		if isError(result[i]) {
 			return []object.Object{result[i]}
 		}
@@ -155,7 +160,7 @@ func evalIndexExpression(node *ast.IndexExpression, env *object.Environment) obj
 	case *ast.Identifier:
 		ident := Eval(left, env)
 		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
-			if arr, ok := ident.(*object.Array); ok {
+			if arr, ok := ident.(*object.Array[any]); ok {
 				return arr.Entries[index.Value]
 			}
 		}
@@ -199,7 +204,7 @@ func evalBangOperator(operator string, right object.Object) object.Object {
 		return booleanObj(right.Value == 0)
 	case *object.String:
 		return booleanObj(len(right.Value) == 0)
-	case *object.Array:
+	case *object.Array[any]:
 		return booleanObj(len(right.Entries) == 0)
 	case *object.Boolean:
 		return booleanObj(!right.Value)
@@ -216,10 +221,10 @@ func booleanObj(boolean bool) *object.Boolean {
 	return FALSE
 }
 
-func applyFunction(fn object.Object, args []object.Object, env *object.Environment) object.Object {
+func applyFunction(fn object.Object, args []object.Object) object.Object {
 	switch fn := fn.(type) {
 	case *object.Function:
-		fnEnv := object.NewEnvironment(env)
+		fnEnv := object.NewEnvironment(fn.ParentEnv)
 		for i, p := range fn.Params {
 			fnEnv.Set(p.Value, args[i])
 		}

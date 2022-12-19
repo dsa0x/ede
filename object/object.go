@@ -1,6 +1,8 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Type string
 
@@ -31,7 +33,6 @@ func (*Null) Type() Type        { return NULL_OBJ }
 func (*ReturnValue) Type() Type { return RETURN_VALUE_OBJ }
 func (*Function) Type() Type    { return FUNCTION_OBJ }
 func (*Builtin) Type() Type     { return BUILTIN_OBJ }
-func (*Array) Type() Type       { return ARRAY_OBJ }
 
 func (v *String) Inspect() string      { return v.Value }
 func (v *Int) Inspect() string         { return fmt.Sprint(v.Value) }
@@ -42,4 +43,3 @@ func (v *Null) Inspect() string        { return "null" }
 func (v *ReturnValue) Inspect() string { return v.Value.Inspect() }
 func (v *Function) Inspect() string    { return "fn" }
 func (*Builtin) Inspect() string       { return "builtin fn" }
-func (*Array) Inspect() string         { return "array" }

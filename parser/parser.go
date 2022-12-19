@@ -64,6 +64,7 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.FUNCTION] = parseFn{prefix: p.parseFunctionLiteral}
 	p.parseFns[token.ASSIGN] = parseFn{infix: p.parseReassignment}
 	p.parseFns[token.RANGE_ARRAY] = parseFn{infix: p.parseRangeArray}
+	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
 	p.registerIllegalFns()
 }
 
@@ -100,48 +101,6 @@ func (p *Parser) Parse() *ast.Program {
 		p.advanceCurrTokenIs(token.SEMICOLON)
 	}
 	return prog
-}
-
-func (p *Parser) advanceToken() {
-	p.currToken = p.nextToken
-	p.tokens = append(p.tokens, p.currToken)
-	p.nextToken = p.lexer.NextToken()
-}
-
-func (p *Parser) currTokenIs(tok token.TokenType) bool {
-	return p.currToken.Type == tok
-}
-func (p *Parser) nextTokenIs(tok token.TokenType) bool {
-	return p.nextToken.Type == tok
-}
-
-// advanceCurrTokenIs advances to the next token if the current token  matches, else it does nothing
-func (p *Parser) advanceCurrTokenIs(tok token.TokenType) bool {
-	found := p.currTokenIs(tok)
-	if found {
-		p.advanceToken()
-	}
-	return found
-}
-
-// advanceNextTokenIs advances to the next token if it matches, else it does nothing
-func (p *Parser) advanceNextTokenIs(tok token.TokenType) bool {
-	found := p.nextTokenIs(tok)
-	if found {
-		p.advanceToken()
-	}
-	return found
-}
-
-// nAdvanceNextTokenIs advances to the next token by n if it matches, else it does nothing
-func (p *Parser) nAdvanceNextTokenIs(tok token.TokenType, n int) bool {
-	found := p.nextTokenIs(tok)
-	if found {
-		for i := 0; i < n; i++ {
-			p.advanceToken()
-		}
-	}
-	return found
 }
 
 func (p *Parser) parseExpr(precedence int) ast.Expression {
@@ -190,6 +149,10 @@ func (p *Parser) postfixParseFn(tok token.TokenType) func(ast.Expression) ast.Ex
 		return parseFn.postfix
 	}
 	return nil
+}
+
+func (p *Parser) addError(msg string, format ...interface{}) {
+	p.errors = append(p.errors, fmt.Errorf(msg, format...))
 }
 
 func (p *Parser) Errors() []error {

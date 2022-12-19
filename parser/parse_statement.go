@@ -65,9 +65,7 @@ func (p *Parser) parseReturnExpr() *ast.ReturnExpression {
 	}
 
 	stmt.Expr = p.parseExpr(LOWEST)
-	if p.nextTokenIs(token.SEMICOLON) {
-		p.advanceToken()
-	}
+	p.advanceNextTokenIs(token.SEMICOLON)
 	return stmt
 }
 

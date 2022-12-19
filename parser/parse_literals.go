@@ -22,7 +22,7 @@ func (p *Parser) parseFloat() ast.Expression {
 }
 
 func (p *Parser) parseBool() ast.Expression {
-	expr := &ast.BooleanLiteral{}
+	expr := &ast.BooleanLiteral{Token: p.currToken}
 
 	val, _ := strconv.ParseBool(p.currToken.Literal)
 	expr.Value = val
@@ -30,6 +30,5 @@ func (p *Parser) parseBool() ast.Expression {
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
-	tok := p.currToken
-	return &ast.StringLiteral{Value: tok.Literal, Token: tok}
+	return &ast.StringLiteral{Value: p.currToken.Literal, Token: p.currToken}
 }

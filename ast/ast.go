@@ -180,6 +180,13 @@ type (
 		ValuePos token.Pos
 	}
 
+	ObjectMethodExpression struct { // e.g foo.bar()
+		Object   Expression
+		Method   Expression
+		Token    token.Token
+		ValuePos token.Pos
+	}
+
 	Program struct {
 		Token       token.Token
 		ParseErrors []error
@@ -188,70 +195,73 @@ type (
 	}
 )
 
-func (s *LetStmt) stmtNode()           {}
-func (s *ExpressionStmt) stmtNode()    {}
-func (s *BlockStmt) stmtNode()         {}
-func (s *CommentStmt) stmtNode()       {}
-func (s *ForLoopStmt) stmtNode()       {}
-func (s *ConditionalStmt) stmtNode()   {}
-func (s *StringLiteral) stmtNode()     {}
-func (s *IntegerLiteral) stmtNode()    {}
-func (s *ArrayLiteral) stmtNode()      {}
-func (s *HashLiteral) stmtNode()       {}
-func (s *BooleanLiteral) stmtNode()    {}
-func (s *FloatLiteral) stmtNode()      {}
-func (s *Identifier) stmtNode()        {}
-func (s *ReassignmentStmt) stmtNode()  {}
-func (s *ErrorStmt) stmtNode()         {}
-func (s *InfixExpression) stmtNode()   {}
-func (s *IfStmt) stmtNode()            {}
-func (s *PrefixExpression) stmtNode()  {}
-func (s *ReturnExpression) stmtNode()  {}
-func (s *PostfixExpression) stmtNode() {}
-func (s *CallExpression) stmtNode()    {}
-func (s *IndexExpression) stmtNode()   {}
+func (s *LetStmt) stmtNode()                {}
+func (s *ExpressionStmt) stmtNode()         {}
+func (s *BlockStmt) stmtNode()              {}
+func (s *CommentStmt) stmtNode()            {}
+func (s *ForLoopStmt) stmtNode()            {}
+func (s *ConditionalStmt) stmtNode()        {}
+func (s *StringLiteral) stmtNode()          {}
+func (s *IntegerLiteral) stmtNode()         {}
+func (s *ArrayLiteral) stmtNode()           {}
+func (s *HashLiteral) stmtNode()            {}
+func (s *BooleanLiteral) stmtNode()         {}
+func (s *FloatLiteral) stmtNode()           {}
+func (s *Identifier) stmtNode()             {}
+func (s *ReassignmentStmt) stmtNode()       {}
+func (s *ErrorStmt) stmtNode()              {}
+func (s *InfixExpression) stmtNode()        {}
+func (s *IfStmt) stmtNode()                 {}
+func (s *PrefixExpression) stmtNode()       {}
+func (s *ReturnExpression) stmtNode()       {}
+func (s *PostfixExpression) stmtNode()      {}
+func (s *CallExpression) stmtNode()         {}
+func (s *IndexExpression) stmtNode()        {}
+func (s *ObjectMethodExpression) stmtNode() {}
 
-func (s *StringLiteral) exprNode()     {}
-func (s *FunctionLiteral) exprNode()   {}
-func (s *IntegerLiteral) exprNode()    {}
-func (s *ArrayLiteral) exprNode()      {}
-func (s *HashLiteral) exprNode()       {}
-func (s *BooleanLiteral) exprNode()    {}
-func (s *FloatLiteral) exprNode()      {}
-func (s *Identifier) exprNode()        {}
-func (s *ReassignmentStmt) exprNode()  {}
-func (s *ErrorStmt) exprNode()         {}
-func (s *InfixExpression) exprNode()   {}
-func (s *PrefixExpression) exprNode()  {}
-func (s *ReturnExpression) exprNode()  {}
-func (s *PostfixExpression) exprNode() {}
-func (s *CallExpression) exprNode()    {}
-func (s *IndexExpression) exprNode()   {}
+func (s *StringLiteral) exprNode()          {}
+func (s *FunctionLiteral) exprNode()        {}
+func (s *IntegerLiteral) exprNode()         {}
+func (s *ArrayLiteral) exprNode()           {}
+func (s *HashLiteral) exprNode()            {}
+func (s *BooleanLiteral) exprNode()         {}
+func (s *FloatLiteral) exprNode()           {}
+func (s *Identifier) exprNode()             {}
+func (s *ReassignmentStmt) exprNode()       {}
+func (s *ErrorStmt) exprNode()              {}
+func (s *InfixExpression) exprNode()        {}
+func (s *PrefixExpression) exprNode()       {}
+func (s *ReturnExpression) exprNode()       {}
+func (s *PostfixExpression) exprNode()      {}
+func (s *CallExpression) exprNode()         {}
+func (s *IndexExpression) exprNode()        {}
+func (s *ObjectMethodExpression) exprNode() {}
 
-func (s *Program) Pos() token.Pos           { return s.ValuePos }
-func (s *LetStmt) Pos() token.Pos           { return s.ValuePos }
-func (s *ExpressionStmt) Pos() token.Pos    { return s.ValuePos }
-func (s *BlockStmt) Pos() token.Pos         { return s.ValuePos }
-func (s *CommentStmt) Pos() token.Pos       { return s.ValuePos }
-func (s *ConditionalStmt) Pos() token.Pos   { return s.ValuePos }
-func (s *ForLoopStmt) Pos() token.Pos       { return s.ValuePos }
-func (s *StringLiteral) Pos() token.Pos     { return s.ValuePos }
-func (s *FunctionLiteral) Pos() token.Pos   { return s.ValuePos }
-func (s *IntegerLiteral) Pos() token.Pos    { return s.ValuePos }
-func (s *ArrayLiteral) Pos() token.Pos      { return s.ValuePos }
-func (s *HashLiteral) Pos() token.Pos       { return s.ValuePos }
-func (s *BooleanLiteral) Pos() token.Pos    { return s.ValuePos }
-func (s *FloatLiteral) Pos() token.Pos      { return s.ValuePos }
-func (s *Identifier) Pos() token.Pos        { return s.ValuePos }
-func (s *ReassignmentStmt) Pos() token.Pos  { return s.ValuePos }
-func (s *ErrorStmt) Pos() token.Pos         { return s.ValuePos }
-func (s *InfixExpression) Pos() token.Pos   { return s.ValuePos }
-func (s *IfStmt) Pos() token.Pos            { return s.ValuePos }
-func (s *PrefixExpression) Pos() token.Pos  { return s.ValuePos }
-func (s *ReturnExpression) Pos() token.Pos  { return s.ValuePos }
-func (s *PostfixExpression) Pos() token.Pos { return s.ValuePos }
-func (s *CallExpression) Pos() token.Pos    { return s.ValuePos }
-func (s *IndexExpression) Pos() token.Pos   { return s.ValuePos }
+func (s *Program) Pos() token.Pos                { return s.ValuePos }
+func (s *LetStmt) Pos() token.Pos                { return s.ValuePos }
+func (s *ExpressionStmt) Pos() token.Pos         { return s.ValuePos }
+func (s *BlockStmt) Pos() token.Pos              { return s.ValuePos }
+func (s *CommentStmt) Pos() token.Pos            { return s.ValuePos }
+func (s *ConditionalStmt) Pos() token.Pos        { return s.ValuePos }
+func (s *ForLoopStmt) Pos() token.Pos            { return s.ValuePos }
+func (s *StringLiteral) Pos() token.Pos          { return s.ValuePos }
+func (s *FunctionLiteral) Pos() token.Pos        { return s.ValuePos }
+func (s *IntegerLiteral) Pos() token.Pos         { return s.ValuePos }
+func (s *ArrayLiteral) Pos() token.Pos           { return s.ValuePos }
+func (s *HashLiteral) Pos() token.Pos            { return s.ValuePos }
+func (s *BooleanLiteral) Pos() token.Pos         { return s.ValuePos }
+func (s *FloatLiteral) Pos() token.Pos           { return s.ValuePos }
+func (s *Identifier) Pos() token.Pos             { return s.ValuePos }
+func (s *ReassignmentStmt) Pos() token.Pos       { return s.ValuePos }
+func (s *ErrorStmt) Pos() token.Pos              { return s.ValuePos }
+func (s *InfixExpression) Pos() token.Pos        { return s.ValuePos }
+func (s *IfStmt) Pos() token.Pos                 { return s.ValuePos }
+func (s *PrefixExpression) Pos() token.Pos       { return s.ValuePos }
+func (s *ReturnExpression) Pos() token.Pos       { return s.ValuePos }
+func (s *PostfixExpression) Pos() token.Pos      { return s.ValuePos }
+func (s *CallExpression) Pos() token.Pos         { return s.ValuePos }
+func (s *IndexExpression) Pos() token.Pos        { return s.ValuePos }
+func (s *ObjectMethodExpression) Pos() token.Pos { return s.ValuePos }
 
 func (s *Program) Literal() string          { return "" } // TODO
 func (s *LetStmt) Literal() string          { return s.Token.Literal }
@@ -280,31 +290,33 @@ func (s *PrefixExpression) Literal() string {
 func (s *ReturnExpression) Literal() string {
 	return fmt.Sprintf("%s%s", s.Token.Literal, s.Expr.Literal())
 }
-func (s *PostfixExpression) Literal() string { return s.Token.Literal }
-func (s *CallExpression) Literal() string    { return s.Token.Literal }
-func (s *IndexExpression) Literal() string   { return s.Token.Literal }
+func (s *PostfixExpression) Literal() string      { return s.Token.Literal }
+func (s *CallExpression) Literal() string         { return s.Token.Literal }
+func (s *IndexExpression) Literal() string        { return s.Token.Literal }
+func (s *ObjectMethodExpression) Literal() string { return s.Token.Literal }
 
-func (s *Program) TokenType() token.TokenType           { return s.Token.Type }
-func (s *LetStmt) TokenType() token.TokenType           { return s.Token.Type }
-func (s *ExpressionStmt) TokenType() token.TokenType    { return s.Token.Type }
-func (s *BlockStmt) TokenType() token.TokenType         { return s.Token.Type }
-func (s *CommentStmt) TokenType() token.TokenType       { return s.Token.Type }
-func (s *ForLoopStmt) TokenType() token.TokenType       { return s.Token.Type }
-func (s *ConditionalStmt) TokenType() token.TokenType   { return s.Token.Type }
-func (s *StringLiteral) TokenType() token.TokenType     { return s.Token.Type }
-func (s *FunctionLiteral) TokenType() token.TokenType   { return s.Token.Type }
-func (s *IntegerLiteral) TokenType() token.TokenType    { return s.Token.Type }
-func (s *ArrayLiteral) TokenType() token.TokenType      { return s.Token.Type }
-func (s *HashLiteral) TokenType() token.TokenType       { return s.Token.Type }
-func (s *BooleanLiteral) TokenType() token.TokenType    { return s.Token.Type }
-func (s *FloatLiteral) TokenType() token.TokenType      { return s.Token.Type }
-func (s *Identifier) TokenType() token.TokenType        { return s.Token.Type }
-func (s *ReassignmentStmt) TokenType() token.TokenType  { return s.Token.Type }
-func (s *ErrorStmt) TokenType() token.TokenType         { return s.Token.Type }
-func (s *IfStmt) TokenType() token.TokenType            { return s.Token.Type }
-func (s *InfixExpression) TokenType() token.TokenType   { return s.Token.Type }
-func (s *PrefixExpression) TokenType() token.TokenType  { return s.Token.Type }
-func (s *ReturnExpression) TokenType() token.TokenType  { return s.Token.Type }
-func (s *PostfixExpression) TokenType() token.TokenType { return s.Token.Type }
-func (s *CallExpression) TokenType() token.TokenType    { return s.Token.Type }
-func (s *IndexExpression) TokenType() token.TokenType   { return s.Token.Type }
+func (s *Program) TokenType() token.TokenType                { return s.Token.Type }
+func (s *LetStmt) TokenType() token.TokenType                { return s.Token.Type }
+func (s *ExpressionStmt) TokenType() token.TokenType         { return s.Token.Type }
+func (s *BlockStmt) TokenType() token.TokenType              { return s.Token.Type }
+func (s *CommentStmt) TokenType() token.TokenType            { return s.Token.Type }
+func (s *ForLoopStmt) TokenType() token.TokenType            { return s.Token.Type }
+func (s *ConditionalStmt) TokenType() token.TokenType        { return s.Token.Type }
+func (s *StringLiteral) TokenType() token.TokenType          { return s.Token.Type }
+func (s *FunctionLiteral) TokenType() token.TokenType        { return s.Token.Type }
+func (s *IntegerLiteral) TokenType() token.TokenType         { return s.Token.Type }
+func (s *ArrayLiteral) TokenType() token.TokenType           { return s.Token.Type }
+func (s *HashLiteral) TokenType() token.TokenType            { return s.Token.Type }
+func (s *BooleanLiteral) TokenType() token.TokenType         { return s.Token.Type }
+func (s *FloatLiteral) TokenType() token.TokenType           { return s.Token.Type }
+func (s *Identifier) TokenType() token.TokenType             { return s.Token.Type }
+func (s *ReassignmentStmt) TokenType() token.TokenType       { return s.Token.Type }
+func (s *ErrorStmt) TokenType() token.TokenType              { return s.Token.Type }
+func (s *IfStmt) TokenType() token.TokenType                 { return s.Token.Type }
+func (s *InfixExpression) TokenType() token.TokenType        { return s.Token.Type }
+func (s *PrefixExpression) TokenType() token.TokenType       { return s.Token.Type }
+func (s *ReturnExpression) TokenType() token.TokenType       { return s.Token.Type }
+func (s *PostfixExpression) TokenType() token.TokenType      { return s.Token.Type }
+func (s *CallExpression) TokenType() token.TokenType         { return s.Token.Type }
+func (s *IndexExpression) TokenType() token.TokenType        { return s.Token.Type }
+func (s *ObjectMethodExpression) TokenType() token.TokenType { return s.Token.Type }

@@ -8,6 +8,7 @@ import (
 type Lexer struct {
 	input []byte
 	// readers func
+	prevPos int
 	currPos int
 	readPos int
 	char    byte
@@ -28,6 +29,7 @@ func (l *Lexer) readChar() {
 	}
 
 	l.charStr = string(l.char)
+	l.prevPos = l.currPos
 	l.currPos = l.readPos
 	l.readPos += 1
 }
@@ -105,6 +107,13 @@ func (l *Lexer) peekCharIs(char byte) bool {
 	return l.peekChar() == char
 }
 
+func (l *Lexer) prevCharIs(char byte) bool {
+	if l.prevPos >= len(l.input) {
+		return false
+	}
+	return l.input[l.prevPos] == char
+}
+
 func (l *Lexer) eatWhitespace() {
 	for l.isWhitespace(l.char) {
 		l.readChar()
@@ -173,6 +182,8 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekCharIs('.') {
 			l.readChar()
 			tok = newToken(token.RANGE_ARRAY, '.', '.')
+		} else {
+			tok = newToken(token.DOT, '.')
 		}
 	default:
 		if l.isIdentifier(l.char) {

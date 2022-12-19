@@ -44,7 +44,7 @@ func (p *Parser) precedence(tokenType token.TokenType) int {
 		return CALL
 	case token.LBRACKET:
 		return INDEX
-	case token.RANGE_ARRAY:
+	case token.RANGE_ARRAY, token.DOT:
 		return HIGHEST
 	}
 	return LOWEST
