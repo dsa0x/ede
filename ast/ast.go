@@ -9,6 +9,7 @@ import (
 type Node interface {
 	Pos() token.Pos
 	Literal() string
+	TokenType() token.TokenType
 }
 
 type Statement interface {
@@ -43,6 +44,7 @@ type (
 	}
 
 	BlockStmt struct {
+		Token      token.Token
 		Statements []Statement
 		ValuePos   token.Pos
 	}
@@ -179,6 +181,7 @@ type (
 	}
 
 	Program struct {
+		Token       token.Token
 		ParseErrors []error
 		Statements  []Statement
 		ValuePos    token.Pos
@@ -280,3 +283,28 @@ func (s *ReturnExpression) Literal() string {
 func (s *PostfixExpression) Literal() string { return s.Token.Literal }
 func (s *CallExpression) Literal() string    { return s.Token.Literal }
 func (s *IndexExpression) Literal() string   { return s.Token.Literal }
+
+func (s *Program) TokenType() token.TokenType           { return s.Token.Type }
+func (s *LetStmt) TokenType() token.TokenType           { return s.Token.Type }
+func (s *ExpressionStmt) TokenType() token.TokenType    { return s.Token.Type }
+func (s *BlockStmt) TokenType() token.TokenType         { return s.Token.Type }
+func (s *CommentStmt) TokenType() token.TokenType       { return s.Token.Type }
+func (s *ForLoopStmt) TokenType() token.TokenType       { return s.Token.Type }
+func (s *ConditionalStmt) TokenType() token.TokenType   { return s.Token.Type }
+func (s *StringLiteral) TokenType() token.TokenType     { return s.Token.Type }
+func (s *FunctionLiteral) TokenType() token.TokenType   { return s.Token.Type }
+func (s *IntegerLiteral) TokenType() token.TokenType    { return s.Token.Type }
+func (s *ArrayLiteral) TokenType() token.TokenType      { return s.Token.Type }
+func (s *HashLiteral) TokenType() token.TokenType       { return s.Token.Type }
+func (s *BooleanLiteral) TokenType() token.TokenType    { return s.Token.Type }
+func (s *FloatLiteral) TokenType() token.TokenType      { return s.Token.Type }
+func (s *Identifier) TokenType() token.TokenType        { return s.Token.Type }
+func (s *ReassignmentStmt) TokenType() token.TokenType  { return s.Token.Type }
+func (s *ErrorStmt) TokenType() token.TokenType         { return s.Token.Type }
+func (s *IfStmt) TokenType() token.TokenType            { return s.Token.Type }
+func (s *InfixExpression) TokenType() token.TokenType   { return s.Token.Type }
+func (s *PrefixExpression) TokenType() token.TokenType  { return s.Token.Type }
+func (s *ReturnExpression) TokenType() token.TokenType  { return s.Token.Type }
+func (s *PostfixExpression) TokenType() token.TokenType { return s.Token.Type }
+func (s *CallExpression) TokenType() token.TokenType    { return s.Token.Type }
+func (s *IndexExpression) TokenType() token.TokenType   { return s.Token.Type }
