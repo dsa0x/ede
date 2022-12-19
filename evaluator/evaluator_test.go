@@ -369,14 +369,14 @@ func TestBuiltinFunctions(t *testing.T) {
 				continue
 			}
 
-			if len(array.Entries) != len(expected) {
+			if len(*array.Entries) != len(expected) {
 				t.Errorf("wrong num of elements. want=%d, got=%d",
-					len(expected), len(array.Entries))
+					len(expected), len(*array.Entries))
 				continue
 			}
 
 			for i, expectedElem := range expected {
-				testIntegerObject(t, array.Entries[i], int64(expectedElem))
+				testIntegerObject(t, (*array.Entries)[i], int64(expectedElem))
 			}
 		}
 	}

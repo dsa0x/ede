@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-type Array[T any] struct{ Entries []Object }
+type Array[T any] struct{ Entries *[]Object }
 
 func (*Array[any]) Type() Type { return ARRAY_OBJ }
 func (v *Array[any]) Inspect() string {
 	buf := new(bytes.Buffer)
 	buf.WriteString("[")
-	for _, el := range v.Entries {
+	for _, el := range *v.Entries {
 		buf.WriteString(el.Inspect())
 		buf.WriteString(",")
 	}
@@ -47,7 +47,7 @@ func (a Array[T]) Map() *Builtin {
 func (a *Array[T]) Push() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
-			a.Entries = append(a.Entries, args...)
+			*a.Entries = append(*a.Entries, args...)
 			return a
 		},
 	}
