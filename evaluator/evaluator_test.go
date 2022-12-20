@@ -48,7 +48,7 @@ func testEval(input string) object.Object {
 	p := parser.New(l)
 	program := p.Parse()
 	env := object.NewEnvironment(nil)
-	return Eval(program, env)
+	return (&Evaluator{}).Eval(program, env)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
@@ -216,7 +216,7 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 	case error:
 		return obj.Type() == object.ERROR_OBJ && obj.Inspect() == evaluated.Error()
 	case []string:
-		obj, ok := obj.(*Array)
+		obj, ok := obj.(*object.Array)
 		if !ok {
 			return false
 		}
@@ -228,6 +228,12 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 			entries = append(entries, el.Inspect())
 		}
 		return slices.Equal(entries, evaluated)
+	case bool:
+		obj, ok := obj.(*object.Boolean)
+		if !ok {
+			return false
+		}
+		return obj.Value
 	}
 	return false
 }
@@ -383,7 +389,7 @@ func TestBuiltinFunctions(t *testing.T) {
 					expected, errObj.Message)
 			}
 		case []int:
-			array, ok := evaluated.(*Array)
+			array, ok := evaluated.(*object.Array)
 			if !ok {
 				t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
 				continue
@@ -633,11 +639,34 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 			`,
 			result: []string{"2", "4", "6"},
 		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
+			let found = arr.contains(2);
+			found;
+			`,
+			result: true,
+		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
+			let found = arr.contains(10);
+			found;
+			`,
+			result: false,
+		},
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			evaluated := testEval(tt.input)
+			if tt.result == false {
+				if evaluated, ok := evaluated.(*object.Boolean); ok {
+					if evaluated.Value == false {
+						return
+					}
+				}
+			}
 			if !testObject(t, evaluated, tt.result) {
 				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
 			}

@@ -12,7 +12,6 @@ type Number interface {
 }
 
 type String struct{ Value string }
-type Int struct{ Value int64 }
 type Float struct{ Value float64 }
 type Boolean struct{ Value bool }
 type Null struct{}

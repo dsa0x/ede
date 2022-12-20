@@ -16,7 +16,7 @@ func evalProgram(node *ast.Program, env *object.Environment) object.Object {
 		if _, isComment := stmt.(*ast.CommentStmt); isComment {
 			continue
 		}
-		result = Eval(stmt, env)
+		result = (&Evaluator{}).Eval(stmt, env)
 		if result == nil {
 			return NULL
 		}

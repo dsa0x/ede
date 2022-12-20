@@ -22,10 +22,10 @@ var (
 type Object interface {
 	Type() Type
 	Inspect() string
+	Equal(obj Object) bool
 }
 
 func (*String) Type() Type      { return STRING_OBJ }
-func (*Int) Type() Type         { return INT_OBJ }
 func (*Float) Type() Type       { return FLOAT_OBJ }
 func (*Boolean) Type() Type     { return BOOLEAN_OBJ }
 func (*Error) Type() Type       { return ERROR_OBJ }
@@ -35,7 +35,6 @@ func (*Function) Type() Type    { return FUNCTION_OBJ }
 func (*Builtin) Type() Type     { return BUILTIN_OBJ }
 
 func (v *String) Inspect() string      { return v.Value }
-func (v *Int) Inspect() string         { return fmt.Sprint(v.Value) }
 func (v *Float) Inspect() string       { return fmt.Sprint(v.Value) }
 func (v *Boolean) Inspect() string     { return fmt.Sprint(v.Value) }
 func (v *Error) Inspect() string       { return fmt.Sprint(v.Message) }
@@ -43,6 +42,35 @@ func (v *Null) Inspect() string        { return "null" }
 func (v *ReturnValue) Inspect() string { return v.Value.Inspect() }
 func (v *Function) Inspect() string    { return "fn" }
 func (*Builtin) Inspect() string       { return "builtin fn" }
+
+func (v *String) Equal(obj Object) bool {
+	if objInt, ok := obj.(*String); ok {
+		return objInt.Value == v.Value
+	}
+	return false
+}
+func (v *Float) Equal(obj Object) bool {
+	if objInt, ok := obj.(*Float); ok {
+		return objInt.Value == v.Value
+	}
+	return false
+}
+func (v *Boolean) Equal(obj Object) bool {
+	if objInt, ok := obj.(*Boolean); ok {
+		return objInt.Value == v.Value
+	}
+	return false
+}
+func (v *Error) Equal(obj Object) bool {
+	if objInt, ok := obj.(*Error); ok {
+		return objInt.Message == v.Message
+	}
+	return false
+}
+func (v *Null) Equal(obj Object) bool        { return true }
+func (v *ReturnValue) Equal(obj Object) bool { return false }
+func (v *Function) Equal(obj Object) bool    { return false }
+func (*Builtin) Equal(obj Object) bool       { return false }
 
 func ToBoolean(obj Object) bool {
 	switch obj := obj.(type) {

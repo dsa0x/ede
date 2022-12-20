@@ -22,7 +22,7 @@ func Start(input io.Reader, output io.Writer) {
 			fmt.Println(p.Errors())
 			continue
 		}
-		if eval := evaluator.Eval(prog, env); eval != nil {
+		if eval := (&evaluator.Evaluator{}).Eval(prog, env); eval != nil {
 			output.Write([]byte(fmt.Sprintf("Result: %v\n", eval.Inspect())))
 		}
 	}

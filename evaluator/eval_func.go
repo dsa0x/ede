@@ -5,22 +5,22 @@ import (
 	"ede/object"
 )
 
-func evalObjectMethodExpr[T any](node *ast.ObjectMethodExpression, env *object.Environment) object.Object {
+func (e *Evaluator) evalObjectMethodExpr(node *ast.ObjectMethodExpression, env *object.Environment) object.Object {
 	if node == nil {
 		return NULL
 	}
 
-	obj := Eval(node.Object, env)
+	obj := e.Eval(node.Object, env)
 	call, ok := node.Method.(*ast.CallExpression)
 	if !ok {
 		return nil
 	}
 
 	switch obj := obj.(type) {
-	case *Array:
+	case *object.Array:
 		ident := call.Function.(*ast.Identifier)
-		method := obj.GetMethod(ident.Value)
-		args := evalArgs(call.Args, env)
+		method := obj.GetMethod(ident.Value, e)
+		args := e.evalArgs(call.Args, env)
 		return method.Fn(args...)
 	}
 

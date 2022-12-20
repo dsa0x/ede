@@ -6,7 +6,7 @@ import (
 	"ede/token"
 )
 
-func evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environment) object.Object {
+func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environment) object.Object {
 	var result object.Object
 	if node == nil {
 		return NULL
@@ -16,19 +16,19 @@ func evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environment) object.Obje
 	case *ast.ArrayLiteral:
 		for i, el := range boundRange.Elements {
 			env.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
-			env.Set(node.Variable.Value, Eval(el, env)) // bound loop variable
+			env.Set(node.Variable.Value, e.Eval(el, env)) // bound loop variable
 			for _, stmt := range node.Statement.Statements {
-				result = Eval(stmt, env)
+				result = e.Eval(stmt, env)
 			}
 		}
 	case *ast.Identifier:
-		ident := Eval(boundRange, env)
-		arr := ident.(*Array) // TODO: may change when we support more
+		ident := e.Eval(boundRange, env)
+		arr := ident.(*object.Array) // TODO: may change when we support more
 		for i, entry := range *arr.Entries {
 			env.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
 			env.Set(node.Variable.Value, entry) // bound loop variable
 			for _, stmt := range node.Statement.Statements {
-				result = Eval(stmt, env)
+				result = e.Eval(stmt, env)
 			}
 		}
 	default:

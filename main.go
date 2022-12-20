@@ -50,7 +50,7 @@ func Execute(input string) error {
 	if prog.ParseErrors != nil {
 		return prog.ParseErrors
 	}
-	eval := evaluator.Eval(prog, env)
+	eval := (&evaluator.Evaluator{}).Eval(prog, env)
 	if eval != nil {
 		fmt.Println(eval.Inspect())
 	}
