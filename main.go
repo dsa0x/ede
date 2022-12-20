@@ -43,12 +43,12 @@ func Execute(input string) error {
 	env := object.NewEnvironment(nil)
 	lex := lexer.New(input)
 	p := parser.New(lex)
-	if len(p.Errors()) != 0 {
-		return unwrappedError(p.Errors())
+	if p.Errors() != nil {
+		return p.Errors()
 	}
 	prog := p.Parse()
-	if len(prog.ParseErrors) != 0 {
-		return unwrappedError(prog.ParseErrors)
+	if prog.ParseErrors != nil {
+		return prog.ParseErrors
 	}
 	eval := evaluator.Eval(prog, env)
 	if eval != nil {

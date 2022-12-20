@@ -23,7 +23,7 @@ func evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environment) object.Obje
 		}
 	case *ast.Identifier:
 		ident := Eval(boundRange, env)
-		arr := ident.(*object.Array[any]) // TODO: may change when we support more
+		arr := ident.(*Array) // TODO: may change when we support more
 		for i, entry := range *arr.Entries {
 			env.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
 			env.Set(node.Variable.Value, entry) // bound loop variable

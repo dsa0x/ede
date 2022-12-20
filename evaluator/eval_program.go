@@ -8,8 +8,8 @@ import (
 func evalProgram(node *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 
-	if len(node.ParseErrors) > 0 {
-		return object.NewError(node.ParseErrors...)
+	if node.ParseErrors != nil {
+		return object.NewError(node.ParseErrors)
 	}
 
 	for _, stmt := range node.Statements {

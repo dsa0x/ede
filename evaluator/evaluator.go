@@ -70,7 +70,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return applyFunction(fn, args)
 	case *ast.ArrayLiteral:
 		entries := evalArgs(node.Elements, env)
-		return &object.Array[any]{Entries: &entries}
+		return &Array{Entries: &entries}
 	case *ast.ReassignmentStmt:
 		if _, found := env.Get(node.Name.Value); !found {
 			return object.NewErrorWithMsg(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value))
@@ -160,7 +160,7 @@ func evalIndexExpression(node *ast.IndexExpression, env *object.Environment) obj
 	case *ast.Identifier:
 		ident := Eval(left, env)
 		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
-			if arr, ok := ident.(*object.Array[any]); ok {
+			if arr, ok := ident.(*Array); ok {
 				return (*arr.Entries)[index.Value]
 			}
 		}
@@ -204,7 +204,7 @@ func evalBangOperator(operator string, right object.Object) object.Object {
 		return booleanObj(right.Value == 0)
 	case *object.String:
 		return booleanObj(len(right.Value) == 0)
-	case *object.Array[any]:
+	case *Array:
 		return booleanObj(len(*right.Entries) == 0)
 	case *object.Boolean:
 		return booleanObj(!right.Value)

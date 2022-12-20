@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"golang.org/x/exp/slices"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -31,6 +33,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"3 * 3 * 3 + 10", 37},
 		{"3 * (3 * 3) + 10", 37},
 		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
+		{"6 % 2", 0},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -164,18 +167,20 @@ func TestIfElseExpressions(t *testing.T) {
 		{"if (1 < 2) { 10 } else { 20 }", 10},
 	}
 
-	for _, tt := range tests {
-		evaluated := testEval(tt.input)
-		integer, ok := tt.expected.(int)
-		if ok {
-			if !testIntegerObject(t, evaluated, int64(integer)) {
-				t.FailNow()
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			integer, ok := tt.expected.(int)
+			if ok {
+				if !testIntegerObject(t, evaluated, int64(integer)) {
+					t.FailNow()
+				}
+			} else {
+				if !testNullObject(t, evaluated) {
+					t.FailNow()
+				}
 			}
-		} else {
-			if !testNullObject(t, evaluated) {
-				t.FailNow()
-			}
-		}
+		})
 	}
 
 	t.Run("invalid order", func(t *testing.T) {
@@ -184,8 +189,8 @@ func TestIfElseExpressions(t *testing.T) {
 		if !ok {
 			t.Fatalf("object is not Error. got=%T (%+v)", evaluated, evaluated)
 		}
-		if !strings.Contains(result.Message, "expected expression") {
-			t.Fatalf("Error message %s does not contain 'expected expression'", result.Message)
+		if !strings.Contains(result.Message, "expected start of expression") {
+			t.Fatalf("Error message %s does not contain 'expected start of expression'", result.Message)
 		}
 	})
 }
@@ -210,6 +215,19 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 		return obj.Type() == object.NULL_OBJ
 	case error:
 		return obj.Type() == object.ERROR_OBJ && obj.Inspect() == evaluated.Error()
+	case []string:
+		obj, ok := obj.(*Array)
+		if !ok {
+			return false
+		}
+		if len(*obj.Entries) != len(evaluated) {
+			return false
+		}
+		entries := []string{}
+		for _, el := range *obj.Entries {
+			entries = append(entries, el.Inspect())
+		}
+		return slices.Equal(entries, evaluated)
 	}
 	return false
 }
@@ -257,11 +275,13 @@ func TestReturnStatements(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		evaluated := testEval(tt.input)
-		if !testIntegerObject(t, evaluated, tt.expected) {
-			t.FailNow()
-		}
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if !testIntegerObject(t, evaluated, tt.expected) {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -363,7 +383,7 @@ func TestBuiltinFunctions(t *testing.T) {
 					expected, errObj.Message)
 			}
 		case []int:
-			array, ok := evaluated.(*object.Array[any])
+			array, ok := evaluated.(*Array)
 			if !ok {
 				t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
 				continue
@@ -473,13 +493,22 @@ func TestEvalStatements(t *testing.T) {
 		`,
 			result: nil,
 		},
+		{
+			input: `
+			let arr = [1,2];
+			arr.push(5);
+			println(arr);
+			arr;
+			`,
+			result: []string{"1", "2", "5"},
+		},
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			evaluated := testEval(tt.input)
 			if !testObject(t, evaluated, tt.result) {
-				t.FailNow()
+				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
 			}
 		})
 	}
@@ -499,7 +528,7 @@ func TestEvalStatements_Error(t *testing.T) {
 		{
 			input: `let arr = [2, ( + 5];
 		`,
-			result: "expected closing parenthesis token ')', got '5'",
+			result: "expected closing parenthesis token ')', got ']'",
 		},
 		{
 			input: `let arr = [2, 3 +];
@@ -514,7 +543,7 @@ func TestEvalStatements_Error(t *testing.T) {
 		{
 			input: `let arr = [2;
 		`,
-			result: "expected closing bracket token ']', got '2'",
+			result: "expected closing bracket token ']', got ';'",
 		},
 		{
 			input: `
@@ -539,6 +568,83 @@ func TestEvalStatements_Error(t *testing.T) {
 	}
 }
 
+func TestEvalStatements_ArrayOperations(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `
+			let arr = [1,2];
+			arr.push(5);
+			println(arr);
+			arr;
+			`,
+			result: []string{"1", "2", "5"},
+		},
+		{
+			input: `
+			let arr = [1,2,4];
+			arr.pop();
+			arr;
+			`,
+			result: []string{"1", "2"},
+		},
+		{
+			input: `
+			let arr = [1,2,4];
+			arr.reverse(double);
+			arr;
+			`,
+			result: []string{"4", "2", "1"},
+		},
+		{
+			input: `
+			let arr = [1,2,4];
+			let double = func(x) { x + x; };
+			arr.map(double);
+			arr;
+			`,
+			result: []string{"2", "4", "8"},
+		},
+		{
+			input: `
+			let arr = [1,2,4];
+			arr.merge([5,6,7]);
+			arr;
+			`,
+			result: []string{"1", "2", "4", "5", "6", "7"},
+		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
+			let even = func(x) { x % 2 == 0 };
+			arr.filter(even);
+			arr;
+			`,
+			result: []string{"2", "4", "6"},
+		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
+			arr.filter(func(x) { x % 2 == 0});
+			arr;
+			`,
+			result: []string{"2", "4", "6"},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if !testObject(t, evaluated, tt.result) {
+				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
+			}
+		})
+	}
+}
+
 func TestEval(t *testing.T) {
 	input := `
 	let arr = [1..10];
@@ -552,13 +658,15 @@ func TestEval(t *testing.T) {
 	`
 
 	input = `
-	let arr = [1,2];
-	arr.push(5);
+	let double = func(x) { x + x; };
+	let arr = [1,2,"foo"];
+	arr.map(double);
 	println(arr);
+	arr;
 	`
 
 	evaluated := testEval(input)
-	if !testObject(t, evaluated, 2) {
+	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {
 		t.FailNow()
 	}
 }

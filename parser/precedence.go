@@ -22,12 +22,6 @@ const (
 	HIGHEST
 )
 
-var precedences = map[token.TokenType]int{
-	token.ASSIGN: ASSIGN,
-	token.EQ:     EQ,
-	token.NEQ:    EQ,
-}
-
 func (p *Parser) precedence(tokenType token.TokenType) int {
 	switch tokenType {
 	case token.ASSIGN:
@@ -36,7 +30,7 @@ func (p *Parser) precedence(tokenType token.TokenType) int {
 		return EQ
 	case token.GT, token.LT:
 		return LESSGREATER
-	case token.PLUS, token.MINUS, token.DEC, token.INC:
+	case token.PLUS, token.MINUS, token.DEC, token.INC, token.MODULO:
 		return SUM
 	case token.ASTERISK, token.SLASH:
 		return PRODUCT

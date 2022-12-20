@@ -6,6 +6,8 @@ import (
 	"ede/token"
 	"fmt"
 	"reflect"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 type (
@@ -19,6 +21,9 @@ type (
 		lexer *lexer.Lexer
 
 		pos       token.Pos
+		prevToken token.Token
+		line      int
+		column    int
 		currToken token.Token
 		nextToken token.Token
 
@@ -56,6 +61,7 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.NEQ] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.GT] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.LT] = parseFn{infix: p.parseInfixOperator}
+	p.parseFns[token.MODULO] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.DEC] = parseFn{postfix: p.parsePostfixExpression}
 	p.parseFns[token.INC] = parseFn{postfix: p.parsePostfixExpression}
 	p.parseFns[token.LPAREN] = parseFn{prefix: p.parseGroupedExpression, infix: p.parseCallExpression}
@@ -65,6 +71,8 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.ASSIGN] = parseFn{infix: p.parseReassignment}
 	p.parseFns[token.RANGE_ARRAY] = parseFn{infix: p.parseRangeArray}
 	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
+	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
+	// p.registerNewlineFns()
 	p.registerIllegalFns()
 }
 
@@ -79,26 +87,28 @@ func (p *Parser) registerIllegalFns() {
 
 func (p *Parser) Parse() *ast.Program {
 	prog := &ast.Program{
-		Statements:  make([]ast.Statement, 0),
-		ParseErrors: make([]error, 0),
+		Statements: make([]ast.Statement, 0),
 	}
 	for !p.currTokenIs(token.EOF) {
+		if p.advanceCurrTokenIs(token.NEWLINE) { // ignore new line
+			continue
+		}
 		stmt := p.parseStmt()
 		if errstmt, ok := stmt.(*ast.ErrorStmt); ok {
-			prog.ParseErrors = append(prog.ParseErrors, fmt.Errorf(errstmt.Value))
+			prog.ParseErrors = multierror.Append(prog.ParseErrors, fmt.Errorf(errstmt.Value))
 			return prog
 		}
 		if stmt != nil && !reflect.ValueOf(stmt).IsNil() {
 			prog.Statements = append(prog.Statements, stmt)
 		}
 
-		if len(p.Errors()) > 0 {
-			prog.ParseErrors = append(prog.ParseErrors, p.Errors()...)
+		if p.Errors() != nil {
+			prog.ParseErrors = multierror.Append(prog.ParseErrors, p.Errors())
 			return prog
 		}
 
-		p.advanceToken()
-		p.advanceCurrTokenIs(token.SEMICOLON)
+		for p.advanceCurrToEndToken() { // advance all end tokens
+		}
 	}
 	return prog
 }
@@ -111,14 +121,12 @@ func (p *Parser) parseExpr(precedence int) ast.Expression {
 	}
 	left := prefixFn()
 
-	for !p.nextTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
-		if infixFn := p.infixParseFn(p.nextToken.Type); infixFn != nil {
-			p.advanceToken()
+	for !p.currTokenIs(token.SEMICOLON) && precedence < p.currPrecedence() {
+		if infixFn := p.infixParseFn(p.currToken.Type); infixFn != nil {
 			left = infixFn(left)
 			continue
 		}
-		if postfixFn := p.postfixParseFn(p.nextToken.Type); postfixFn != nil {
-			p.advanceToken()
+		if postfixFn := p.postfixParseFn(p.currToken.Type); postfixFn != nil {
 			left = postfixFn(left)
 			continue
 		}
@@ -135,7 +143,7 @@ func (p *Parser) prefixParseFn(tok token.TokenType) func() ast.Expression {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	p.errors = append(p.errors, fmt.Errorf("no prefix parse function for %s found", t))
+	p.errors = append(p.errors, NewParseError(fmt.Errorf("no prefix parse function for '%s' found", t), p.lexer.Position(), p.column))
 }
 
 func (p *Parser) infixParseFn(tok token.TokenType) func(ast.Expression) ast.Expression {
@@ -155,8 +163,8 @@ func (p *Parser) addError(msg string, format ...interface{}) {
 	p.errors = append(p.errors, fmt.Errorf(msg, format...))
 }
 
-func (p *Parser) Errors() []error {
-	return p.errors
+func (p *Parser) Errors() error {
+	return multierror.Append(nil, p.errors...).ErrorOrNil()
 }
 func (p *Parser) UnwrappedError() error {
 	var err error
@@ -166,6 +174,13 @@ func (p *Parser) UnwrappedError() error {
 	return err
 }
 
+func expectAfterTokenErrorStr(exp, prev, got string) error {
+	return fmt.Errorf("expected %s after %s, got %s", exp, prev, got)
+}
+
 func expectAfterTokenError(exp, prev, got string) ast.Statement {
 	return &ast.ErrorStmt{Value: fmt.Sprintf("expected %s after %s, got %s", exp, prev, got)}
+}
+func unexpectedTokenError(exp, got string) ast.Statement {
+	return &ast.ErrorStmt{Value: fmt.Sprintf("expected token %s, got %s", exp, got)}
 }

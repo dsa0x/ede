@@ -23,7 +23,9 @@ func applyBuiltinLen(args ...object.Object) object.Object {
 	switch arg := arg.(type) {
 	case *object.String:
 		return &object.Int{Value: int64(len(arg.Value))}
-	case *object.Array[any]:
+	// case *object.Array[any]:
+	// 	return &object.Int{Value: int64(len(*arg.Entries))}
+	case *Array:
 		return &object.Int{Value: int64(len(*arg.Entries))}
 	}
 	return object.NewErrorWithMsg(fmt.Sprintf("argument to `len` not supported, got %s", arg.Type()))

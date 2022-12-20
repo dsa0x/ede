@@ -5,6 +5,8 @@ import (
 	"ede/lexer"
 	"fmt"
 	"testing"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 func TestLetStatements(t *testing.T) {
@@ -291,13 +293,11 @@ func TestInfixExpressions(t *testing.T) {
 
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
-	if len(errors) == 0 {
+	if errors == nil {
 		return
 	}
-	t.Errorf("parser has %d errors", len(errors))
-	for _, msg := range errors {
-		t.Errorf("parser error: %q", msg)
-	}
+	t.Errorf("parser has %d errors", multierror.Append(errors).Len())
+	t.Errorf("parser error: %q", errors)
 	t.FailNow()
 }
 

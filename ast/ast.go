@@ -189,7 +189,7 @@ type (
 
 	Program struct {
 		Token       token.Token
-		ParseErrors []error
+		ParseErrors error
 		Statements  []Statement
 		ValuePos    token.Pos
 	}

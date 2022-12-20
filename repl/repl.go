@@ -18,7 +18,7 @@ func Start(input io.Reader, output io.Writer) {
 		lex := lexer.New(scanner.Text())
 		p := parser.New(lex)
 		prog := p.Parse()
-		if len(p.Errors()) != 0 {
+		if p.Errors() != nil {
 			fmt.Println(p.Errors())
 			continue
 		}

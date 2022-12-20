@@ -10,6 +10,7 @@ func (p *Parser) parseInteger() ast.Expression {
 
 	val, _ := strconv.Atoi(p.currToken.Literal)
 	expr.Value = int64(val)
+	p.advanceToken()
 	return expr
 }
 
@@ -18,6 +19,7 @@ func (p *Parser) parseFloat() ast.Expression {
 
 	val, _ := strconv.ParseFloat(p.currToken.Literal, 64)
 	expr.Value = val
+	p.advanceToken()
 	return expr
 }
 
@@ -26,9 +28,12 @@ func (p *Parser) parseBool() ast.Expression {
 
 	val, _ := strconv.ParseBool(p.currToken.Literal)
 	expr.Value = val
+	p.advanceToken()
 	return expr
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
-	return &ast.StringLiteral{Value: p.currToken.Literal, Token: p.currToken}
+	expr := &ast.StringLiteral{Value: p.currToken.Literal, Token: p.currToken}
+	p.advanceToken()
+	return expr
 }

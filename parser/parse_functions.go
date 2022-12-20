@@ -8,17 +8,21 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var mathTokens = []token.TokenType{token.PLUS, token.MINUS, token.ASTERISK, token.SLASH}
-var literalTokens = []token.TokenType{token.INT, token.FLOAT, token.STRING}
-
 func (p *Parser) parseGroupedExpression() ast.Expression {
-	p.advanceToken()
+	p.advanceToken() // eat opening token
 	expr := p.parseExpr(LOWEST)
-	if !p.advanceNextTokenIs(token.RPAREN) {
+	if !p.advanceCurrTokenIs(token.RPAREN) {
 		p.addError("expected closing parenthesis token ')', got '%s'", p.currToken.Literal)
 		return nil
 	}
-	return expr
+	for {
+		switch p.currToken.Type {
+		case token.SEMICOLON, token.NEWLINE:
+			p.advanceToken()
+		default:
+			return expr
+		}
+	}
 }
 
 func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
@@ -28,7 +32,7 @@ func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
 		return nil
 	}
 	expr.Method = p.parseExpr(LOWEST)
-	p.advanceNextTokenIs(token.SEMICOLON)
+	// p.advanceNextToEndToken()
 	return expr
 }
 
@@ -85,6 +89,7 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseIdent() ast.Expression {
 	tok := p.currToken
+	p.advanceToken()
 	return &ast.Identifier{Value: tok.Literal, Token: tok}
 }
 
@@ -148,7 +153,7 @@ func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 		return nil
 	}
 	expr.Expr = p.parseExpr(LOWEST)
-	p.advanceNextTokenIs(token.SEMICOLON)
+	p.advanceNextToEndToken()
 	return expr
 }
 
@@ -169,7 +174,7 @@ func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 	for i := startL.Value; i <= endL.Value; i++ {
 		expr.Elements = append(expr.Elements, &ast.IntegerLiteral{Value: i})
 	}
-	if !p.nextTokenIs(token.LBRACE) && !p.nextTokenIs(token.RBRACKET) { // TODO: usage in forloop and array literal should be diff
+	if !p.currTokenIs(token.LBRACE) && !p.currTokenIs(token.RBRACKET) { // TODO: usage in forloop and array literal should be diff
 		return nil
 	}
 	p.advanceToken()
@@ -179,14 +184,16 @@ func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 	expr := &ast.CallExpression{Function: fn, Token: p.currToken}
 
-	if !p.advanceCurrTokenIs(token.LPAREN) {
+	if !p.advanceCurrTokenIs(token.LPAREN) { // eat opening token
 		return nil
 	}
 	expr.Args = p.parseArguments(token.RPAREN)
 	if expr.Args == nil {
 		p.addError("expected closing parenthesis token ')', got '%s'", p.currToken.Literal)
 	}
-	p.advanceNextTokenIs(token.SEMICOLON)
+	if !p.advanceCurrTokenIs(token.RPAREN) { // eat closing token
+		return nil
+	}
 	return expr
 }
 
@@ -194,7 +201,7 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 	expr := &ast.HashLiteral{Token: p.currToken, Pair: make(map[ast.Expression]ast.Expression)}
 
 	keySet := map[any]ast.Expression{}
-	if !p.advanceCurrTokenIs(token.LBRACE) {
+	if !p.advanceCurrTokenIs(token.LBRACE) { // eat opening token
 		return nil
 	}
 	for !p.currTokenIs(token.EOF) && !p.currTokenIs(token.RBRACE) {
@@ -209,20 +216,22 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 			delete(expr.Pair, key)
 		}
 		keySet[rawValue] = key
-		p.advanceToken()
 		if !p.advanceCurrTokenIs(token.COLON) {
 			return nil
 		}
 		expr.Pair[key] = p.parseExpr(LOWEST)
 
-		p.advanceNextTokenIs(token.COMMA)
-		p.advanceToken()
+		p.advanceCurrTokenIs(token.COMMA)
 	}
-	p.advanceNextTokenIs(token.SEMICOLON)
+	if !p.advanceCurrTokenIs(token.RBRACE) {
+		p.errors = append(p.errors, fmt.Errorf("unexpected end of token. expected }, got %s", p.nextToken.Literal))
+		return nil
+	}
 	return expr
 }
 
 func (p *Parser) parseArguments(endToken token.TokenType) []ast.Expression {
+	// parseArguments will not meet the opening brace token and should not advance the closing brace
 	exprs := make([]ast.Expression, 0)
 
 	// if no args
@@ -233,11 +242,11 @@ func (p *Parser) parseArguments(endToken token.TokenType) []ast.Expression {
 	for !p.currTokenIs(token.EOF) && !p.currTokenIs(endToken) {
 		exprs = append(exprs, p.parseExpr(LOWEST))
 
-		if !p.advanceNextTokenIs(token.COMMA) && !p.nextTokenIs(endToken) {
+		if !p.currTokenIs(token.COMMA) && !p.currTokenIs(endToken) {
 			p.errors = append(p.errors, fmt.Errorf("unexpected end of token. expected %s, got %s", endToken, p.nextToken.Literal))
 			return nil
 		}
-		p.advanceToken()
+		p.advanceCurrTokenIs(token.COMMA) // advance to next expr if comma
 	}
 
 	return exprs
@@ -253,12 +262,4 @@ func getRawValue(expr ast.Expression) any {
 		return expr.Value
 	}
 	return nil
-}
-
-type infixPattern [3]token.TokenType
-
-var infixPatterns = []infixPattern{
-	{token.INT, token.PLUS, token.INT},
-	{token.INT, token.GT, token.INT},
-	{token.INT, token.LT, token.INT},
 }

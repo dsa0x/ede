@@ -43,3 +43,19 @@ func (v *Null) Inspect() string        { return "null" }
 func (v *ReturnValue) Inspect() string { return v.Value.Inspect() }
 func (v *Function) Inspect() string    { return "fn" }
 func (*Builtin) Inspect() string       { return "builtin fn" }
+
+func ToBoolean(obj Object) bool {
+	switch obj := obj.(type) {
+	case *String:
+		return len(obj.Value) > 0
+	case *Boolean:
+		return obj.Value
+	case *Int:
+		return obj.Value > 0
+	case *Float:
+		return obj.Value > 0
+	case *Null:
+		return false
+	}
+	return false
+}

@@ -33,10 +33,12 @@ const (
 	NEQ      = "!="
 	DEC      = "--"
 	INC      = "++"
+	MODULO   = "%"
 
 	// Delimiters
 	COMMA     = ","
 	SEMICOLON = ";"
+	NEWLINE   = "\n"
 	COLON     = ":"
 	DOT       = "."
 

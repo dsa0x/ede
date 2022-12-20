@@ -120,6 +120,9 @@ func (l *Lexer) eatWhitespace() {
 	}
 }
 
+func (l *Lexer) Position() int {
+	return l.currPos
+}
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -134,7 +137,7 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.ASSIGN, l.char)
 		}
-	case ';', '{', '}', '(', ')', ',', '[', ']', ':':
+	case ';', '{', '}', '(', ')', ',', '[', ']', ':', '\n':
 		tok = charTokens[l.char]
 	case '+':
 		if l.peekCharIs('+') {
@@ -176,6 +179,8 @@ func (l *Lexer) NextToken() token.Token {
 		}
 	case '"':
 		tok = newToken(token.STRING, l.readString()...)
+	case '%':
+		tok = newToken(token.MODULO, l.char)
 	case 0:
 		tok = newToken(token.EOF)
 	case '.':
@@ -224,17 +229,18 @@ func (l *Lexer) isIdentifier(char byte) bool {
 	return unicode.IsLetter(rune(char)) || char == '_'
 }
 func (l *Lexer) isWhitespace(char byte) bool {
-	return char == ' ' || char == '\t' || char == '\n'
+	return char == ' ' || char == '\t' // || char == '\n'
 }
 
 var charTokens = map[byte]token.Token{
-	';': newToken(token.SEMICOLON, ';'),
-	'{': newToken(token.LBRACE, '{'),
-	'}': newToken(token.RBRACE, '}'),
-	'(': newToken(token.LPAREN, '('),
-	')': newToken(token.RPAREN, ')'),
-	'[': newToken(token.LBRACKET, '['),
-	']': newToken(token.RBRACKET, ']'),
-	',': newToken(token.COMMA, ','),
-	':': newToken(token.COLON, ':'),
+	';':  newToken(token.SEMICOLON, ';'),
+	'{':  newToken(token.LBRACE, '{'),
+	'}':  newToken(token.RBRACE, '}'),
+	'(':  newToken(token.LPAREN, '('),
+	')':  newToken(token.RPAREN, ')'),
+	'[':  newToken(token.LBRACKET, '['),
+	']':  newToken(token.RBRACKET, ']'),
+	',':  newToken(token.COMMA, ','),
+	':':  newToken(token.COLON, ':'),
+	'\n': newToken(token.NEWLINE, '\n'),
 }

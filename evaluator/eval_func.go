@@ -17,7 +17,7 @@ func evalObjectMethodExpr[T any](node *ast.ObjectMethodExpression, env *object.E
 	}
 
 	switch obj := obj.(type) {
-	case *object.Array[T]:
+	case *Array:
 		ident := call.Function.(*ast.Identifier)
 		method := obj.GetMethod(ident.Value)
 		args := evalArgs(call.Args, env)
