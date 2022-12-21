@@ -655,6 +655,14 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 			`,
 			result: false,
 		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
+			let first_even = arr.find(func(x) { x % 2 == 0});
+			first_even;
+			`,
+			result: 2,
+		},
 	}
 
 	for i, tt := range tests {

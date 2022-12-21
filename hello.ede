@@ -2,9 +2,10 @@ let name = "foo";
 let age = 10.5;
 let subjects = ["english", "french"];
 
-for i = range 1..10 {
+for i = range [1..10] {
     age++;
 };
 
+let best_subject = subjects[10]
 println("name is", name, "and age is", age);
-// println(name, "is taking", len(subjects) "subjects");
+println("best subject is ", best_subject)

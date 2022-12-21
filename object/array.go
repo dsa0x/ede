@@ -54,6 +54,8 @@ func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Filter(eval)
 	case "contains":
 		return a.Contains(eval)
+	case "find":
+		return a.Find(eval)
 	}
 	return nil
 }
@@ -91,25 +93,53 @@ func (a *Array) Reverse() *Builtin {
 		},
 	}
 }
-func (a *Array) Contains(eval Evaluator) *Builtin {
+
+func (a *Array) Contains(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
 				return countArgumentError("1", len(args))
 			}
-			var found bool
-			for _, entry := range *a.Entries {
-				if entry.Equal(args[0]) {
-					found = true
-					break
-				}
-			}
+			_, found := lo.Find(*a.Entries, func(entry Object) bool {
+				return entry.Equal(args[0])
+			})
 			return &Boolean{Value: found}
 		},
 	}
 }
 
-func (a *Array) Map(eval Evaluator) *Builtin {
+func (a *Array) Find(evaluator Evaluator) *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) != 1 {
+				return countArgumentError("1", len(args))
+			}
+			fn, ok := args[0].(*Function)
+			if !ok {
+				return NewError(fmt.Errorf("method 'find' expects a function argument, got %T", fn))
+			}
+			if len(fn.Params) != 1 {
+				NewError(fmt.Errorf("function should have 1 argument, got %d", len(fn.Params)))
+			}
+
+			arrs := make([]Object, 0)
+			result := &Array{Entries: &arrs}
+			for _, el := range *a.Entries {
+				env := NewEnvironment(fn.ParentEnv)
+				env.Set(fn.Params[0].Value, el)
+				obj := evaluator.Eval(fn.Body, env)
+				if boolVal := ToBoolean(obj); boolVal {
+					*result.Entries = append(*result.Entries, el)
+					return el
+				}
+			}
+			*a.Entries = *result.Entries
+			return a
+		},
+	}
+}
+
+func (a *Array) Map(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
@@ -129,7 +159,7 @@ func (a *Array) Map(eval Evaluator) *Builtin {
 			for _, el := range *a.Entries {
 				env := NewEnvironment(fn.ParentEnv)
 				env.Set(fn.Params[0].Value, el)
-				*result.Entries = append(*result.Entries, eval.Eval(fn.Body, env))
+				*result.Entries = append(*result.Entries, evaluator.Eval(fn.Body, env))
 			}
 			*a.Entries = *result.Entries
 			return a
@@ -137,7 +167,7 @@ func (a *Array) Map(eval Evaluator) *Builtin {
 	}
 }
 
-func (a *Array) Filter(eval Evaluator) *Builtin {
+func (a *Array) Filter(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
@@ -157,7 +187,7 @@ func (a *Array) Filter(eval Evaluator) *Builtin {
 			for _, el := range *a.Entries {
 				env := NewEnvironment(fn.ParentEnv)
 				env.Set(fn.Params[0].Value, el)
-				obj := eval.Eval(fn.Body, env)
+				obj := evaluator.Eval(fn.Body, env)
 				if boolVal := ToBoolean(obj); boolVal {
 					*result.Entries = append(*result.Entries, el)
 				}

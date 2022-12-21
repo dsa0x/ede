@@ -1,6 +1,8 @@
 package parser
 
-import "ede/token"
+import (
+	"ede/token"
+)
 
 func (p *Parser) advanceToken() {
 	p.prevToken = p.currToken

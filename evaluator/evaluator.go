@@ -164,6 +164,9 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 		ident := e.Eval(left, env)
 		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
 			if arr, ok := ident.(*object.Array); ok {
+				if int(index.Value) >= len(*arr.Entries) {
+					return object.NewErrorWithMsg(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*arr.Entries)))
+				}
 				return (*arr.Entries)[index.Value]
 			}
 		}
@@ -171,7 +174,7 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 	case *ast.ArrayLiteral:
 		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
 			if int(index.Value) >= len(left.Elements) {
-				return object.NewErrorWithMsg(fmt.Sprintf("index %d out of range", index.Value))
+				return object.NewErrorWithMsg(fmt.Sprintf("index %d out of range with length %d", index.Value, len(left.Elements)))
 			}
 			return e.Eval(left.Elements[index.Value], env)
 		}
