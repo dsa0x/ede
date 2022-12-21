@@ -22,8 +22,8 @@ type (
 
 		pos       token.Pos
 		prevToken token.Token
-		line      int
-		column    int
+		// line      int
+		// column    int
 		currToken token.Token
 		nextToken token.Token
 
@@ -88,6 +88,7 @@ func (p *Parser) registerIllegalFns() {
 func (p *Parser) Parse() *ast.Program {
 	prog := &ast.Program{
 		Statements: make([]ast.Statement, 0),
+		ValuePos:   p.pos,
 	}
 	for !p.currTokenIs(token.EOF) {
 		if p.advanceCurrTokenIs(token.NEWLINE) { // ignore new line
@@ -107,8 +108,7 @@ func (p *Parser) Parse() *ast.Program {
 			return prog
 		}
 
-		for p.advanceCurrToEndToken() { // advance all end tokens
-		}
+		p.eatEndToken() // advance all end tokens
 	}
 	return prog
 }
@@ -143,7 +143,7 @@ func (p *Parser) prefixParseFn(tok token.TokenType) func() ast.Expression {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	p.errors = append(p.errors, NewParseError(fmt.Errorf("no prefix parse function for '%s' found", t), p.lexer.Position(), p.column))
+	p.addError(fmt.Sprintf("no prefix parse function for '%s' found", t))
 }
 
 func (p *Parser) infixParseFn(tok token.TokenType) func(ast.Expression) ast.Expression {
@@ -157,30 +157,4 @@ func (p *Parser) postfixParseFn(tok token.TokenType) func(ast.Expression) ast.Ex
 		return parseFn.postfix
 	}
 	return nil
-}
-
-func (p *Parser) addError(msg string, format ...interface{}) {
-	p.errors = append(p.errors, fmt.Errorf(msg, format...))
-}
-
-func (p *Parser) Errors() error {
-	return multierror.Append(nil, p.errors...).ErrorOrNil()
-}
-func (p *Parser) UnwrappedError() error {
-	var err error
-	for _, e := range p.errors {
-		err = fmt.Errorf("%s, %w", err, e)
-	}
-	return err
-}
-
-func expectAfterTokenErrorStr(exp, prev, got string) error {
-	return fmt.Errorf("expected %s after %s, got %s", exp, prev, got)
-}
-
-func expectAfterTokenError(exp, prev, got string) ast.Statement {
-	return &ast.ErrorStmt{Value: fmt.Sprintf("expected %s after %s, got %s", exp, prev, got)}
-}
-func unexpectedTokenError(exp, got string) ast.Statement {
-	return &ast.ErrorStmt{Value: fmt.Sprintf("expected token %s, got %s", exp, got)}
 }

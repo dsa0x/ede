@@ -7,7 +7,10 @@ type Token struct {
 	Literal string
 }
 
-type Pos int
+type Pos struct {
+	Line   int
+	Column int
+}
 
 const (
 	ILLEGAL = "ILLEGAL"

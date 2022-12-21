@@ -9,11 +9,7 @@ func (p *Parser) advanceToken() {
 	p.currToken = p.nextToken
 	p.tokens = append(p.tokens, p.currToken)
 	p.nextToken = p.lexer.NextToken()
-	p.column++
-	if p.nextToken.Type == token.NEWLINE {
-		p.line++
-		p.column = 0
-	}
+	p.pos = token.Pos{Column: p.lexer.Column(), Line: p.lexer.Line()}
 }
 
 func (p *Parser) currTokenIs(tok token.TokenType) bool {
@@ -47,6 +43,11 @@ func (p *Parser) advanceCurrToEndToken() bool {
 		p.advanceToken()
 	}
 	return found
+}
+
+func (p *Parser) eatEndToken() {
+	for p.advanceCurrToEndToken() {
+	}
 }
 
 func (p *Parser) advanceNextToEndToken() bool {

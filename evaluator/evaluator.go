@@ -14,9 +14,11 @@ var (
 )
 
 type Evaluator struct {
+	pos token.Pos
 }
 
 func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
+	e.pos = node.Pos()
 	switch node := node.(type) {
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
@@ -76,7 +78,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Array{Entries: &entries}
 	case *ast.ReassignmentStmt:
 		if _, found := env.Get(node.Name.Value); !found {
-			return object.NewErrorWithMsg(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value))
+			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Pos())
 		}
 		res := e.Eval(node.Expr, env)
 		env.Set(node.Name.Value, res)
@@ -165,7 +167,7 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
 			if arr, ok := ident.(*object.Array); ok {
 				if int(index.Value) >= len(*arr.Entries) {
-					return object.NewErrorWithMsg(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*arr.Entries)))
+					return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*arr.Entries)), node.Pos())
 				}
 				return (*arr.Entries)[index.Value]
 			}
@@ -174,12 +176,12 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 	case *ast.ArrayLiteral:
 		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
 			if int(index.Value) >= len(left.Elements) {
-				return object.NewErrorWithMsg(fmt.Sprintf("index %d out of range with length %d", index.Value, len(left.Elements)))
+				return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(left.Elements)), node.Pos())
 			}
 			return e.Eval(left.Elements[index.Value], env)
 		}
 	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid index operator %s for %s", node.Index.Literal(), node.Left))
+	return e.EvalError(fmt.Sprintf("invalid index operator %s for %s", node.Index.Literal(), node.Left), node.Pos())
 }
 
 func (e *Evaluator) evalPostfixExpression(operator string, left object.Object) object.Object {
@@ -201,7 +203,7 @@ func (e *Evaluator) evalPostfixExpression(operator string, left object.Object) o
 			return &object.Float{Value: left.Value - 1}
 		}
 	}
-	return object.NewErrorWithMsg(fmt.Sprintf("invalid postfix operator %s for %s", operator, left.Inspect()))
+	return e.EvalError(fmt.Sprintf("invalid postfix operator %s for %s", operator, left.Inspect()), e.pos)
 }
 
 func (e *Evaluator) evalBangOperator(operator string, right object.Object) object.Object {
@@ -217,7 +219,7 @@ func (e *Evaluator) evalBangOperator(operator string, right object.Object) objec
 	case *object.Null:
 		return TRUE
 	}
-	return object.NewErrorWithMsg(fmt.Sprintf("bang operator not valid for type %T", right))
+	return e.EvalError(fmt.Sprintf("bang operator not valid for type %T", right), e.pos)
 }
 
 func (e *Evaluator) booleanObj(boolean bool) *object.Boolean {
@@ -269,4 +271,13 @@ func isError(obj object.Object) bool {
 		return obj.Type() == object.ERROR_OBJ
 	}
 	return false
+}
+
+func (e *Evaluator) EvalError(err string, pos token.Pos) *object.Error {
+	msg := fmt.Sprintf(`
+	Error: %s
+	Line: %d
+	Column: %d
+	`, err, pos.Line, pos.Column)
+	return &object.Error{Message: msg}
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
-	expr := &ast.ArrayLiteral{Token: p.currToken}
+	expr := &ast.ArrayLiteral{Token: p.currToken, ValuePos: p.pos}
 
 	if !p.advanceCurrTokenIs(token.LBRACKET) {
 		return nil
@@ -28,7 +28,7 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 }
 
 func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
-	expr := &ast.IndexExpression{Left: left, Token: p.currToken}
+	expr := &ast.IndexExpression{Left: left, Token: p.currToken, ValuePos: p.pos}
 
 	if !p.advanceCurrTokenIs(token.LBRACKET) { // eat starting token
 		return nil

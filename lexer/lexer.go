@@ -13,6 +13,8 @@ type Lexer struct {
 	readPos int
 	char    byte
 	charStr string
+
+	line int
 }
 
 func New(input string) *Lexer {
@@ -120,9 +122,6 @@ func (l *Lexer) eatWhitespace() {
 	}
 }
 
-func (l *Lexer) Position() int {
-	return l.currPos
-}
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -137,8 +136,11 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.ASSIGN, l.char)
 		}
-	case ';', '{', '}', '(', ')', ',', '[', ']', ':', '\n':
+	case ';', '{', '}', '(', ')', ',', '[', ']', ':':
 		tok = charTokens[l.char]
+	case '\n':
+		tok = charTokens[l.char]
+		l.line++
 	case '+':
 		if l.peekCharIs('+') {
 			l.readChar()
@@ -243,4 +245,12 @@ var charTokens = map[byte]token.Token{
 	',':  newToken(token.COMMA, ','),
 	':':  newToken(token.COLON, ':'),
 	'\n': newToken(token.NEWLINE, '\n'),
+}
+
+func (l *Lexer) Column() int {
+	return l.currPos
+}
+
+func (l *Lexer) Line() int {
+	return l.line + 1
 }

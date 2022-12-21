@@ -523,40 +523,39 @@ func TestEvalStatements_Error(t *testing.T) {
 
 	tests := []struct {
 		input  string
-		result string
+		result []string
 	}{
 		{
-			input: `let index = foo;
-			let subjects = ["english", "french"];
+			input: `let subjects = ["english", "french"];
+			let index = foo;
 		`,
-			result: "cannot assign to reserved keyword 'index'",
+			result: []string{"cannot assign to reserved keyword 'index'", "Line: 2"},
 		},
 		{
 			input: `let arr = [2, ( + 5];
 		`,
-			result: "expected closing parenthesis token ')', got ']'",
+			result: []string{"expected closing parenthesis token ')', got ']'", "Line: 1"},
 		},
 		{
 			input: `let arr = [2, 3 +];
 		`,
-			result: "invalid right expression ] for operator '+'",
+			result: []string{"invalid right expression ] for operator '+'", "Line: 1"},
 		},
 		{
 			input: `let arr = [2, | +];
 		`,
-			result: "illegal token |",
+			result: []string{"illegal token |", "Line: 1"},
 		},
 		{
 			input: `let arr = [2;
 		`,
-			result: "expected closing bracket token ']', got ';'",
+			result: []string{"expected closing bracket token ']', got ';'"},
 		},
 		{
-			input: `
-			a = 24;
+			input: `a = 24;
 			println(a);
 		`,
-			result: "cannot reassign undeclared identifier 'a'",
+			result: []string{"cannot reassign undeclared identifier 'a'", "Line: 1"},
 		},
 	}
 
@@ -567,8 +566,11 @@ func TestEvalStatements_Error(t *testing.T) {
 			if !ok {
 				t.Fatalf("expected result of type *object.Error, got %T", evaluated)
 			}
-			if !strings.Contains(evaluated.Message, tt.result) {
-				t.Fatalf("expected \"%s\" to contain error \"%s\"", evaluated.Message, tt.result)
+			fmt.Println(evaluated.Message)
+			for _, str := range tt.result {
+				if !strings.Contains(evaluated.Message, str) {
+					t.Fatalf("expected \"%s\" to contain error \"%s\"", evaluated.Message, str)
+				}
 			}
 		})
 	}
