@@ -53,6 +53,10 @@ func (e *Evaluator) evalIntegerInfixExpression(operator string, left, right *obj
 		return e.booleanObj(left.Value > right.Value)
 	case "<":
 		return e.booleanObj(left.Value < right.Value)
+	case ">=":
+		return e.booleanObj(left.Value >= right.Value)
+	case "<=":
+		return e.booleanObj(left.Value <= right.Value)
 	case "==":
 		return e.booleanObj(left.Value == right.Value)
 	case "!=":

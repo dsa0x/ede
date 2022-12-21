@@ -60,7 +60,9 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.EQ] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.NEQ] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.GT] = parseFn{infix: p.parseInfixOperator}
+	p.parseFns[token.GTE] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.LT] = parseFn{infix: p.parseInfixOperator}
+	p.parseFns[token.LTE] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.MODULO] = parseFn{infix: p.parseInfixOperator}
 	p.parseFns[token.DEC] = parseFn{postfix: p.parsePostfixExpression}
 	p.parseFns[token.INC] = parseFn{postfix: p.parsePostfixExpression}

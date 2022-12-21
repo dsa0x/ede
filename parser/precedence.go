@@ -28,7 +28,7 @@ func (p *Parser) precedence(tokenType token.TokenType) int {
 		return ASSIGN
 	case token.EQ, token.NEQ:
 		return EQ
-	case token.GT, token.LT:
+	case token.GT, token.LT, token.LTE, token.GTE:
 		return LESSGREATER
 	case token.PLUS, token.MINUS, token.DEC, token.INC, token.MODULO:
 		return SUM

@@ -174,10 +174,18 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.BANG, l.char)
 		}
 	case '>':
-		tok = newToken(token.GT, l.char)
+		if l.peekCharIs('=') {
+			l.readChar()
+			tok = newToken(token.GTE, []byte(">=")...)
+		} else {
+			tok = newToken(token.GT, l.char)
+		}
 	case '<':
 		if l.peekCharIs('-') {
 			tok = newToken(token.RETURN, l.readReturn()...)
+		} else if l.peekCharIs('=') {
+			l.readChar()
+			tok = newToken(token.LTE, []byte("<=")...)
 		} else {
 			tok = newToken(token.LT, l.char)
 		}
