@@ -157,6 +157,60 @@ func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 	return expr
 }
 
+func (p *Parser) parsePlusEqual(ident ast.Expression) ast.Expression {
+	var expr *ast.ReassignmentStmt
+	if id, ok := ident.(*ast.Identifier); ok {
+		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken, ValuePos: p.pos}
+	} else {
+		p.addError("unexpected token assignment: %s", ident.Literal())
+		return nil
+	}
+
+	if token.IsReservedKeyword(expr.Token.Literal) {
+		p.addError("unexpected assignment of reserved keyword %s", expr.Token.Literal)
+		return nil
+	}
+
+	if !p.advanceCurrTokenIs(token.PLUS_EQUAL) {
+		p.addError(unexpectedTokenError(token.PLUS_EQUAL, p.currToken.Literal))
+		return nil
+	}
+
+	expr.Expr = &ast.InfixExpression{Left: ident,
+		Right:    p.parseExpr(LOWEST),
+		ValuePos: p.pos,
+		Operator: token.PLUS,
+	}
+	return expr
+}
+
+func (p *Parser) parseMinusEqual(ident ast.Expression) ast.Expression {
+	var expr *ast.ReassignmentStmt
+	if id, ok := ident.(*ast.Identifier); ok {
+		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken, ValuePos: p.pos}
+	} else {
+		p.addError("unexpected token assignment: %s", ident.Literal())
+		return nil
+	}
+
+	if token.IsReservedKeyword(expr.Token.Literal) {
+		p.addError("unexpected assignment of reserved keyword %s", expr.Token.Literal)
+		return nil
+	}
+
+	if !p.advanceCurrTokenIs(token.MINUS_EQUAL) {
+		p.addError(unexpectedTokenError(token.MINUS_EQUAL, p.currToken.Literal))
+		return nil
+	}
+
+	expr.Expr = &ast.InfixExpression{Left: ident,
+		Right:    p.parseExpr(LOWEST),
+		ValuePos: p.pos,
+		Operator: token.MINUS,
+	}
+	return expr
+}
+
 func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 	startL, ok := start.(*ast.IntegerLiteral)
 	if !ok {
@@ -164,6 +218,7 @@ func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 	}
 	expr := &ast.ArrayLiteral{Token: p.currToken, Elements: make([]ast.Expression, 0), ValuePos: p.pos}
 	if !p.advanceNextTokenIs(token.INT) {
+		p.addError(unexpectedTokenError(token.INT, p.nextToken.Literal))
 		return nil
 	}
 	end := p.parseExpr(LOWEST)

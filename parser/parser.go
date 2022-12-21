@@ -71,6 +71,8 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.LBRACE] = parseFn{prefix: p.parseHashLiteral}
 	p.parseFns[token.FUNCTION] = parseFn{prefix: p.parseFunctionLiteral}
 	p.parseFns[token.ASSIGN] = parseFn{infix: p.parseReassignment}
+	p.parseFns[token.PLUS_EQUAL] = parseFn{infix: p.parsePlusEqual}
+	p.parseFns[token.MINUS_EQUAL] = parseFn{infix: p.parseMinusEqual}
 	p.parseFns[token.RANGE_ARRAY] = parseFn{infix: p.parseRangeArray}
 	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
 	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}

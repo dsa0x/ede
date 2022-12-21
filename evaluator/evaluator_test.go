@@ -497,13 +497,18 @@ func TestEvalStatements(t *testing.T) {
 			result: nil,
 		},
 		{
-			input: `
-			let arr = [1,2];
-			arr.push(5);
-			println(arr);
-			arr;
-			`,
-			result: []string{"1", "2", "5"},
+			input: `let name = "foo";
+			let age = 10.5;
+			age += 10
+			age`,
+			result: 20.5,
+		},
+		{
+			input: `let name = "foo";
+			let age = 20.5;
+			age -= 10
+			age`,
+			result: 10.5,
 		},
 	}
 
@@ -730,7 +735,7 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
-	t.Skip()
+	// t.Skip()
 	input := `
 	let arr = [1..10];
 	let double = func(x) {
@@ -752,15 +757,9 @@ func TestEval(t *testing.T) {
 
 	input = `let name = "foo";
 	let age = 10.5;
-	let subjects = ["english", "french"];
-	
-	for i = range [1..10] {
-		age++;
-	};
-	
-	let best_subject = subjects[1]
-	println("name is", name, "and age is", age);
-	println("best subject is ", best_subject)`
+	age += 10
+	age
+	`
 
 	evaluated := testEval(input)
 	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {

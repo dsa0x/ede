@@ -147,6 +147,9 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekCharIs('+') {
 			l.readChar()
 			tok = newToken(token.INC, []byte("++")...)
+		} else if l.peekCharIs('=') {
+			l.readChar()
+			tok = newToken(token.PLUS_EQUAL, []byte("+=")...)
 		} else {
 			tok = newToken(token.PLUS, l.char)
 		}
@@ -154,6 +157,9 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekCharIs('-') {
 			l.readChar()
 			tok = newToken(token.DEC, []byte("--")...)
+		} else if l.peekCharIs('=') {
+			l.readChar()
+			tok = newToken(token.MINUS_EQUAL, []byte("-=")...)
 		} else {
 			tok = newToken(token.MINUS, l.char)
 		}
