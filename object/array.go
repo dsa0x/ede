@@ -3,6 +3,7 @@ package object
 import (
 	"bytes"
 	"ede/ast"
+	"ede/token"
 	"fmt"
 	"strings"
 
@@ -210,8 +211,9 @@ func (a *Array) Filter(evaluator Evaluator) *Builtin {
 
 			arrs := make([]Object, 0)
 			result := &Array{Entries: &arrs}
-			for _, el := range *a.Entries {
+			for idx, el := range *a.Entries {
 				env := NewEnvironment(fn.ParentEnv)
+				env.Set(token.IndexIdentifier, &Int{Value: int64(idx)})
 				env.Set(fn.Params[0].Value, el)
 				obj := evaluator.Eval(fn.Body, env)
 				if boolVal := ToBoolean(obj); boolVal {

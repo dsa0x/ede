@@ -672,6 +672,15 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 		{
 			input: `
 			let arr = [1,2,3,4,5,6];
+			let even = func(x) { index >= 3 };
+			arr.filter(even);
+			arr;
+			`,
+			result: []string{"4", "5", "6"},
+		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
 			arr.filter(func(x) { x % 2 == 0});
 			arr;
 			`,
