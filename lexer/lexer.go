@@ -14,7 +14,8 @@ type Lexer struct {
 	char    byte
 	charStr string
 
-	line int
+	line     int
+	startCol int
 }
 
 func New(input string) *Lexer {
@@ -62,7 +63,7 @@ func (l *Lexer) readDigit() []byte {
 func (l *Lexer) readString() []byte {
 	l.readChar() // read the beginner
 	start := l.currPos
-	for l.char != '"' {
+	for l.char != '"' && l.readPos < len(l.input) && l.char != '\n' {
 		l.readChar()
 	}
 	return l.input[start:l.currPos]
@@ -141,6 +142,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '\n':
 		tok = charTokens[l.char]
 		l.line++
+		l.startCol = l.currPos // start of a new line
 	case '+':
 		if l.peekCharIs('+') {
 			l.readChar()
@@ -180,7 +182,11 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.LT, l.char)
 		}
 	case '"':
-		tok = newToken(token.STRING, l.readString()...)
+		str := l.readString()
+		tok = newToken(token.STRING, str...)
+		if l.char != '"' {
+			tok = newToken(token.ILLEGAL, str...)
+		}
 	case '%':
 		tok = newToken(token.MODULO, l.char)
 	case 0:
@@ -203,7 +209,6 @@ func (l *Lexer) NextToken() token.Token {
 			if l.currCharIs('.') {
 				// if it is not float or list, then it's invalid
 				if !(l.peekCharIs('.') || unicode.IsDigit(rune(l.peekChar()))) {
-					// TODO: communicate error
 					return newToken(token.ILLEGAL, l.peekChar())
 				}
 				if unicode.IsDigit(rune(l.peekChar())) {
@@ -248,7 +253,7 @@ var charTokens = map[byte]token.Token{
 }
 
 func (l *Lexer) Column() int {
-	return l.currPos
+	return l.currPos - l.startCol
 }
 
 func (l *Lexer) Line() int {

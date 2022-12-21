@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	NULL  = &object.Null{}
+	NULL  = object.NULL
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
 )
@@ -18,6 +18,9 @@ type Evaluator struct {
 }
 
 func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
+	if node == nil {
+		return nil
+	}
 	e.pos = node.Pos()
 	switch node := node.(type) {
 	case *ast.StringLiteral:

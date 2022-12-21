@@ -3,7 +3,6 @@ package parser
 import (
 	"ede/ast"
 	"ede/token"
-	"fmt"
 
 	"golang.org/x/exp/slices"
 )
@@ -32,7 +31,6 @@ func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
 		return nil
 	}
 	expr.Method = p.parseExpr(LOWEST)
-	// p.advanceNextToEndToken()
 	return expr
 }
 
@@ -78,13 +76,13 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 
 	p.advanceToken()
 	if slices.Contains([]token.TokenType{token.LBRACE, token.LBRACKET}, left.TokenType()) {
-		p.errors = append(p.errors, fmt.Errorf("invalid left expression %s for operator '%s'", left.TokenType(), operator.Literal))
+		p.addError("invalid left expression %s for operator '%s'", left.TokenType(), operator.Literal)
 		return nil
 	}
 
 	if inf.Right = p.parseExpr(currPrecedence); inf.Right == nil {
 		// if we couldn't parse the right
-		p.errors = append(p.errors, fmt.Errorf("invalid right expression %s for operator '%s'", p.currToken.Literal, operator.Literal))
+		p.addError("invalid right expression %s for operator '%s'", p.currToken.Literal, operator.Literal)
 		return nil
 	}
 	return inf
@@ -211,7 +209,7 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 		key := p.parseExpr(LOWEST)
 		rawValue := getRawValue(key)
 		if rawValue == nil {
-			p.errors = append(p.errors, fmt.Errorf("invalid type %T for hash key", key))
+			p.addError("invalid type %T for hash key", key)
 			return nil
 		}
 		// if the key exists, delete it so it is overwritten by the new token
@@ -227,7 +225,7 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 		p.advanceCurrTokenIs(token.COMMA)
 	}
 	if !p.advanceCurrTokenIs(token.RBRACE) {
-		p.errors = append(p.errors, fmt.Errorf("unexpected end of token. expected }, got %s", p.nextToken.Literal))
+		p.addError("unexpected end of token. expected }, got %s", p.nextToken.Literal)
 		return nil
 	}
 	return expr
@@ -246,7 +244,7 @@ func (p *Parser) parseArguments(endToken token.TokenType) []ast.Expression {
 		exprs = append(exprs, p.parseExpr(LOWEST))
 
 		if !p.currTokenIs(token.COMMA) && !p.currTokenIs(endToken) {
-			p.errors = append(p.errors, fmt.Errorf("unexpected end of token. expected %s, got %s", endToken, p.nextToken.Literal))
+			p.addError("unexpected end of token. expected %s, got %s", endToken, p.nextToken.Literal)
 			return nil
 		}
 		p.advanceCurrTokenIs(token.COMMA) // advance to next expr if comma

@@ -78,7 +78,7 @@ func (p *Parser) registerParseFns() {
 
 func (p *Parser) registerIllegalFns() {
 	ilFn := func() ast.Expression {
-		p.errors = append(p.errors, fmt.Errorf("illegal token %s", p.currToken.Literal))
+		p.addError("illegal token '%s'", p.currToken.Literal)
 		return nil
 	}
 	ilFn2 := func(ast.Expression) ast.Expression { return ilFn() }

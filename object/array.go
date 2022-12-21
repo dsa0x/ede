@@ -44,6 +44,10 @@ func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Push()
 	case "pop":
 		return a.Pop()
+	case "first":
+		return a.First()
+	case "last":
+		return a.Last()
 	case "reverse":
 		return a.Reverse()
 	case "map":
@@ -78,6 +82,28 @@ func (a *Array) Pop() *Builtin {
 
 			*a.Entries = (*a.Entries)[0 : len(*a.Entries)-1]
 			return a
+		},
+	}
+}
+
+func (a *Array) First() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(*a.Entries) == 0 {
+				return NULL
+			}
+			return (*a.Entries)[0]
+		},
+	}
+}
+
+func (a *Array) Last() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(*a.Entries) == 0 {
+				return NULL
+			}
+			return (*a.Entries)[len(*a.Entries)-1]
 		},
 	}
 }

@@ -357,16 +357,6 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
 		{`println("hello", "world!")`, nil},
-		// {`first([1, 2, 3])`, 1},
-		// {`first([])`, nil},
-		// {`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
-		// {`last([1, 2, 3])`, 3},
-		// {`last([])`, nil},
-		// {`last(1)`, "argument to `last` must be ARRAY, got INTEGER"},
-		// {`rest([1, 2, 3])`, []int{2, 3}},
-		// {`rest([])`, nil},
-		// {`push([], 1)`, []int{1}},
-		// {`push(1, 1)`, "argument to `push` must be ARRAY, got INTEGER"},
 	}
 
 	for _, tt := range tests {
@@ -544,7 +534,7 @@ func TestEvalStatements_Error(t *testing.T) {
 		{
 			input: `let arr = [2, | +];
 		`,
-			result: []string{"illegal token |", "Line: 1"},
+			result: []string{"illegal token '|'", "Line: 1"},
 		},
 		{
 			input: `let arr = [2;
@@ -556,6 +546,11 @@ func TestEvalStatements_Error(t *testing.T) {
 			println(a);
 		`,
 			result: []string{"cannot reassign undeclared identifier 'a'", "Line: 1"},
+		},
+		{
+			input: `let name = "foo;
+		`,
+			result: []string{"illegal token 'foo", "Line: 1"},
 		},
 	}
 
@@ -598,6 +593,22 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 			arr;
 			`,
 			result: []string{"1", "2"},
+		},
+		{
+			input: `
+			let arr = [1,2,4];
+			let first = arr.first();
+			first;
+			`,
+			result: 1,
+		},
+		{
+			input: `
+			let arr = [1,2,4];
+			let last = arr.last();
+			last;
+			`,
+			result: 4,
 		},
 		{
 			input: `
@@ -685,6 +696,7 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
+	t.Skip()
 	input := `
 	let arr = [1..10];
 	let double = func(x) {
@@ -703,6 +715,18 @@ func TestEval(t *testing.T) {
 	println(arr);
 	arr;
 	`
+
+	input = `let name = "foo";
+	let age = 10.5;
+	let subjects = ["english", "french"];
+	
+	for i = range [1..10] {
+		age++;
+	};
+	
+	let best_subject = subjects[1]
+	println("name is", name, "and age is", age);
+	println("best subject is ", best_subject)`
 
 	evaluated := testEval(input)
 	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {

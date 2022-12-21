@@ -17,6 +17,8 @@ var (
 	RETURN_VALUE_OBJ Type = "RETURN_VALUE"
 	BUILTIN_OBJ      Type = "BUILTIN"
 	ARRAY_OBJ        Type = "ARRAY"
+
+	NULL = &Null{}
 )
 
 type Object interface {

@@ -77,7 +77,7 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 	stmt := &ast.IfStmt{Token: p.currToken, ValuePos: p.pos}
 	stmt.Alternatives = make([]*ast.ConditionalStmt, 0)
 	if !p.advanceNextTokenIs(token.LPAREN) { // eat opening token IF
-		p.errors = append(p.errors, fmt.Errorf("unexpected token %s, want %s", p.nextToken.Literal, token.LPAREN))
+		p.addError("unexpected token %s, want %s", p.nextToken.Literal, token.LPAREN)
 		return nil
 	}
 	p.advanceToken() // eat ( opener of expr
@@ -222,7 +222,7 @@ func (p *Parser) parseForStmt() ast.Statement {
 
 func (p *Parser) parseExpressionStmt() *ast.ExpressionStmt {
 	if !slices.Contains(startTokens, token.LookupIdent(p.currToken.Literal)) {
-		p.errors = append(p.errors, fmt.Errorf("expected start of expression, found '%s'", p.currToken.Literal))
+		p.addError("expected start of expression, found '%s'", p.currToken.Literal)
 		return nil
 	}
 	stmt := &ast.ExpressionStmt{Token: p.currToken, ValuePos: p.pos}
