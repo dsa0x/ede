@@ -81,6 +81,11 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Array{Entries: &entries}
 	case *ast.HashLiteral:
 		entries := e.evalPairs(node.Pair, env)
+		for _, val := range entries {
+			if isError(val) {
+				return val
+			}
+		}
 		return &object.Hash{Entries: entries}
 	case *ast.ReassignmentStmt:
 		if _, found := env.Get(node.Name.Value); !found {
@@ -121,17 +126,22 @@ func (e *Evaluator) evalArgs(args []ast.Expression, env *object.Environment) []o
 	return result
 }
 
-func (e *Evaluator) evalPairs(args map[ast.Expression]ast.Expression, env *object.Environment) map[object.Object]object.Object {
-	result := make(map[object.Object]object.Object)
+func (e *Evaluator) evalPairs(args map[ast.Expression]ast.Expression, env *object.Environment) map[string]object.Object {
+	result := make(map[string]object.Object)
 
 	for key, value := range args {
 		keyObj := e.Eval(key, env)
-		valueObj := e.Eval(value, env)
-		if isError(keyObj) || isError(valueObj) {
-			result[keyObj] = valueObj
+		keyString := object.ToRawValue(keyObj)
+		if keyString == "" {
+			result[keyString] = object.NewErrorWithMsg(fmt.Sprintf("invalid key '%s'", keyString))
 			return result
 		}
-		result[keyObj] = valueObj
+		valueObj := e.Eval(value, env)
+		if isError(keyObj) || isError(valueObj) {
+			result[keyString] = valueObj
+			return result
+		}
+		result[keyString] = valueObj
 	}
 
 	return result

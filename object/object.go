@@ -91,3 +91,17 @@ func ToBoolean(obj Object) bool {
 	}
 	return false
 }
+
+func ToRawValue(obj Object) string {
+	switch obj := obj.(type) {
+	case *String:
+		return obj.Value
+	case *Boolean:
+		return fmt.Sprint(obj.Value)
+	case *Int:
+		return fmt.Sprint(obj.Value)
+	case *Float:
+		return fmt.Sprint(obj.Value)
+	}
+	return ""
+}

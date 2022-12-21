@@ -5,7 +5,9 @@ import (
 	"ede/lexer"
 	"ede/object"
 	"ede/parser"
+	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -228,7 +230,27 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 		for _, el := range *obj.Entries {
 			entries = append(entries, el.Inspect())
 		}
+		sort.Strings(entries)
+		sort.Strings(evaluated)
 		return slices.Equal(entries, evaluated)
+	case []any:
+		obj, ok := obj.(*object.Array)
+		if !ok {
+			return false
+		}
+		if len(*obj.Entries) != len(evaluated) {
+			return false
+		}
+		entries, evEntries := []string{}, []string{}
+		for _, el := range *obj.Entries {
+			entries = append(entries, el.Inspect())
+		}
+		for _, el := range evaluated {
+			evEntries = append(evEntries, fmt.Sprint(el))
+		}
+		sort.Strings(entries)
+		sort.Strings(evEntries)
+		return slices.Equal(entries, evEntries)
 	case bool:
 		obj, ok := obj.(*object.Boolean)
 		if !ok {
@@ -756,11 +778,60 @@ func TestEvalStatements_HashOperations(t *testing.T) {
 			`,
 			result: false,
 		},
+		{
+			input: `
+			let hash = {"a":10, 5.5:2,"bar":3};
+			hash
+			`,
+			result: errors.New("invalid type *ast.FloatLiteral for hash key"),
+		},
+		{
+			input: `
+			let hash = {"a":"b","foo":2,"bar":3};
+			let keys = hash.keys();
+			keys
+			`,
+			result: []string{"a", "foo", "bar"},
+		},
+		{
+			input: `
+			let hash = {"a":"b","foo":2,"bar":3};
+			let keys = hash.items();
+			keys
+			`,
+			result: []any{"b", 2, 3},
+		},
+		{
+			input: `
+			let hash = {"a":"b","foo":2,"bar":3};
+			let foo = hash.get("foo");
+			foo
+			`,
+			result: 2,
+		},
+		// {
+		// 	input: `
+		// 	let hash = {"a":"b","foo":2,"bar":3};
+		// 	hash.clear();
+		// 	hash
+		// 	`,
+		// 	result: []string{},
+		// },
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			evaluated := testEval(tt.input)
+			if err, ok := tt.result.(error); ok {
+				if errObj, ok := evaluated.(*object.Error); ok {
+					if !strings.Contains(errObj.Message, err.Error()) {
+						t.Fatalf("expected \"%s\" to contain error \"%s\"", errObj.Message, err.Error())
+					}
+				} else {
+					t.Fatalf("expected object to be of type *object.Error, got %T", evaluated)
+				}
+				return
+			}
 			if tt.result == false {
 				if evaluated, ok := evaluated.(*object.Boolean); ok {
 					if evaluated.Value == false {
@@ -776,7 +847,7 @@ func TestEvalStatements_HashOperations(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
-	// t.Skip()
+	t.Skip()
 	input := `
 	let arr = [1..10];
 	let double = func(x) {
