@@ -9,8 +9,8 @@ import (
 
 var (
 	NULL  = object.NULL
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
+	TRUE  = object.TRUE
+	FALSE = object.FALSE
 )
 
 type Evaluator struct {
@@ -79,6 +79,9 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.ArrayLiteral:
 		entries := e.evalArgs(node.Elements, env)
 		return &object.Array{Entries: &entries}
+	case *ast.HashLiteral:
+		entries := e.evalPairs(node.Pair, env)
+		return &object.Hash{Entries: entries}
 	case *ast.ReassignmentStmt:
 		if _, found := env.Get(node.Name.Value); !found {
 			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Pos())
@@ -113,6 +116,22 @@ func (e *Evaluator) evalArgs(args []ast.Expression, env *object.Environment) []o
 		if isError(result[i]) {
 			return []object.Object{result[i]}
 		}
+	}
+
+	return result
+}
+
+func (e *Evaluator) evalPairs(args map[ast.Expression]ast.Expression, env *object.Environment) map[object.Object]object.Object {
+	result := make(map[object.Object]object.Object)
+
+	for key, value := range args {
+		keyObj := e.Eval(key, env)
+		valueObj := e.Eval(value, env)
+		if isError(keyObj) || isError(valueObj) {
+			result[keyObj] = valueObj
+			return result
+		}
+		result[keyObj] = valueObj
 	}
 
 	return result

@@ -22,6 +22,11 @@ func (e *Evaluator) evalObjectMethodExpr(node *ast.ObjectMethodExpression, env *
 		method := obj.GetMethod(ident.Value, e)
 		args := e.evalArgs(call.Args, env)
 		return method.Fn(args...)
+	case *object.Hash:
+		ident := call.Function.(*ast.Identifier)
+		method := obj.GetMethod(ident.Value, e)
+		args := e.evalArgs(call.Args, env)
+		return method.Fn(args...)
 	}
 
 	return obj

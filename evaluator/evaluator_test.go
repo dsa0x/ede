@@ -734,6 +734,47 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 	}
 }
 
+func TestEvalStatements_HashOperations(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `
+			let foo = {"a":"b"};
+			let age = foo.contains("a");
+			age
+			`,
+			result: true,
+		},
+		{
+			input: `
+			let foo = {"a":"b"};
+			let age = foo.contains("c");
+			age
+			`,
+			result: false,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if tt.result == false {
+				if evaluated, ok := evaluated.(*object.Boolean); ok {
+					if evaluated.Value == false {
+						return
+					}
+				}
+			}
+			if !testObject(t, evaluated, tt.result) {
+				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
+			}
+		})
+	}
+}
+
 func TestEval(t *testing.T) {
 	// t.Skip()
 	input := `
@@ -755,9 +796,8 @@ func TestEval(t *testing.T) {
 	arr;
 	`
 
-	input = `let name = "foo";
-	let age = 10.5;
-	age += 10
+	input = `let foo = {"a":"b"};
+	let age = foo.contains("a")
 	age
 	`
 
