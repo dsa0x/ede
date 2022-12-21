@@ -72,7 +72,6 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.RANGE_ARRAY] = parseFn{infix: p.parseRangeArray}
 	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
 	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
-	// p.registerNewlineFns()
 	p.registerIllegalFns()
 }
 

@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"ede/ast"
 	"ede/lexer"
 	"ede/object"
 	"ede/parser"
@@ -481,6 +482,12 @@ func TestEvalStatements(t *testing.T) {
 			result: nil,
 		},
 		{
+			input: `let sub
+			sub;
+		`,
+			result: nil,
+		},
+		{
 			input: `
 			let subjects = ["english", "french"];
 			for sub = range subjects {
@@ -508,6 +515,24 @@ func TestEvalStatements(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEvalLet(t *testing.T) {
+	input := `let sub
+	sub;
+	`
+
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.Parse()
+	if len(program.Statements) != 2 {
+		t.Fatalf("expected %d statements, got %d", 2, len(program.Statements))
+	}
+
+	if stmt, ok := program.Statements[0].(*ast.LetStmt); !ok {
+		t.Fatalf("expected type *ast.LetStmt, got %T", stmt)
+	}
+
 }
 func TestEvalStatements_Error(t *testing.T) {
 

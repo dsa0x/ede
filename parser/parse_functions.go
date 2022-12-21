@@ -154,7 +154,6 @@ func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 		return nil
 	}
 	expr.Expr = p.parseExpr(LOWEST)
-	p.advanceNextToEndToken()
 	return expr
 }
 

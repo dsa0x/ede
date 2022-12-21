@@ -44,13 +44,14 @@ func (p *Parser) parseStmt() ast.Statement {
 }
 
 func (p *Parser) parseLetStmt() *ast.LetStmt {
-	stmt := &ast.LetStmt{Token: p.currToken}
-	if !p.advanceNextTokenIs(token.IDENT) {
+	stmt := &ast.LetStmt{Token: p.currToken, ValuePos: p.pos}
+	if !p.advanceNextTokenIs(token.IDENT) { // eat LET token
 		return nil
 	}
 	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
 
-	if p.advanceNextTokenIs(token.SEMICOLON) { // e.g let foo;
+	if p.nextTokenIs(token.SEMICOLON) || p.nextTokenIs(token.NEWLINE) { // e.g let foo;
+		p.advanceToken()
 		return stmt
 	}
 
@@ -69,7 +70,6 @@ func (p *Parser) parseReturnExpr() *ast.ReturnExpression {
 	}
 
 	stmt.Expr = p.parseExpr(LOWEST)
-	p.advanceNextToEndToken()
 	return stmt
 }
 

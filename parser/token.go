@@ -37,16 +37,9 @@ func (p *Parser) advanceNextTokenIs(tok token.TokenType) bool {
 	return found
 }
 
-func (p *Parser) advanceCurrToEndToken() bool {
-	found := p.currTokenIs(token.SEMICOLON) || p.currTokenIs(token.NEWLINE)
-	if found {
-		p.advanceToken()
-	}
-	return found
-}
-
 func (p *Parser) eatEndToken() {
-	for p.advanceCurrToEndToken() {
+	for p.currTokenIs(token.SEMICOLON) || p.currTokenIs(token.NEWLINE) {
+		p.advanceToken()
 	}
 }
 
