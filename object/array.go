@@ -67,6 +67,8 @@ func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Join(eval)
 	case "clear":
 		return a.Clear()
+	case "set":
+		return a.Set()
 	}
 	return nil
 }
@@ -290,6 +292,25 @@ func (a *Array) Clear() *Builtin {
 			}
 			*a.Entries = (*a.Entries)[:0]
 			return a
+		},
+	}
+}
+
+func (a *Array) Set() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) > 0 {
+				return countArgumentError("0", len(args))
+			}
+			set := make(map[HashKey]struct{})
+			for _, arg := range *a.Entries {
+				key := ToHashKey(arg)
+				if key == EmptyHashKey {
+					return NewErrorWithMsg("cannot add non-hashable %v item to set", arg.Inspect())
+				}
+				set[key] = struct{}{}
+			}
+			return &Set{Entries: set}
 		},
 	}
 }

@@ -24,6 +24,8 @@ var (
 	NULL  = &Null{}
 	TRUE  = &Boolean{Value: true}
 	FALSE = &Boolean{Value: false}
+
+	EmptyHashKey = HashKey{}
 )
 
 type Object interface {
@@ -41,42 +43,18 @@ type Hashable interface {
 	Inspect() string
 }
 
-func (*String) Type() Type      { return STRING_OBJ }
-func (*Float) Type() Type       { return FLOAT_OBJ }
-func (*Boolean) Type() Type     { return BOOLEAN_OBJ }
 func (*Error) Type() Type       { return ERROR_OBJ }
 func (*Null) Type() Type        { return NULL_OBJ }
 func (*ReturnValue) Type() Type { return RETURN_VALUE_OBJ }
 func (*Function) Type() Type    { return FUNCTION_OBJ }
 func (*Builtin) Type() Type     { return BUILTIN_OBJ }
 
-func (v *String) Inspect() string      { return v.Value }
-func (v *Float) Inspect() string       { return fmt.Sprint(v.Value) }
-func (v *Boolean) Inspect() string     { return fmt.Sprint(v.Value) }
 func (v *Error) Inspect() string       { return fmt.Sprint(v.Message) }
 func (v *Null) Inspect() string        { return "null" }
 func (v *ReturnValue) Inspect() string { return v.Value.Inspect() }
 func (v *Function) Inspect() string    { return "fn" }
 func (*Builtin) Inspect() string       { return "builtin fn" }
 
-func (v *String) Equal(obj Object) bool {
-	if objInt, ok := obj.(*String); ok {
-		return objInt.Value == v.Value
-	}
-	return false
-}
-func (v *Float) Equal(obj Object) bool {
-	if objInt, ok := obj.(*Float); ok {
-		return objInt.Value == v.Value
-	}
-	return false
-}
-func (v *Boolean) Equal(obj Object) bool {
-	if objInt, ok := obj.(*Boolean); ok {
-		return objInt.Value == v.Value
-	}
-	return false
-}
 func (v *Error) Equal(obj Object) bool {
 	if objInt, ok := obj.(*Error); ok {
 		return objInt.Message == v.Message
@@ -115,7 +93,7 @@ func ToHashKey(obj Object) HashKey {
 	if obj, ok := obj.(Hashable); ok {
 		return obj.HashKey()
 	}
-	return HashKey{}
+	return EmptyHashKey
 }
 
 func FromHashKey(key HashKey) Object {
@@ -132,14 +110,6 @@ func FromHashKey(key HashKey) Object {
 	return nil
 }
 
-var EmptyHashKey = HashKey{}
-
-func (v *String) HashKey() HashKey {
-	return HashKey{Type: v.Type(), Value: v.Value}
-}
 func (v *Int) HashKey() HashKey {
-	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
-}
-func (v *Boolean) HashKey() HashKey {
 	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
 }

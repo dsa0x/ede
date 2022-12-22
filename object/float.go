@@ -2,27 +2,25 @@ package object
 
 import "fmt"
 
-type Int struct{ Value int64 }
-
-func (*Int) Type() Type        { return INT_OBJ }
-func (v *Int) Inspect() string { return fmt.Sprint(v.Value) }
-func (v *Int) Equal(obj Object) bool {
-	if objInt, ok := obj.(*Int); ok {
+func (*Float) Type() Type        { return FLOAT_OBJ }
+func (v *Float) Inspect() string { return fmt.Sprint(v.Value) }
+func (v *Float) Equal(obj Object) bool {
+	if objInt, ok := obj.(*Float); ok {
 		return objInt.Value == v.Value
 	}
 	return false
 }
 
-func (a *Int) GetMethod(name string, eval Evaluator) *Builtin {
+func (a *Float) GetMethod(name string, eval Evaluator) *Builtin {
 	switch name {
-	case "float":
+	case "int":
 		return &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) > 0 {
 					return countArgumentError("0", len(args))
 				}
 
-				return &Float{Value: float64(a.Value)}
+				return &Int{Value: int64(a.Value)}
 			},
 		}
 	case "string":

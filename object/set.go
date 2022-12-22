@@ -3,9 +3,6 @@ package object
 import (
 	"bytes"
 	"strings"
-
-	"github.com/samber/lo"
-	"golang.org/x/exp/slices"
 )
 
 type Set struct{ Entries map[HashKey]struct{} }
@@ -25,9 +22,15 @@ func (v *Set) Inspect() string {
 
 func (v *Set) Equal(obj Object) bool {
 	if obj, ok := obj.(*Set); ok {
-		objEntries := lo.Keys(obj.Entries)
-		vEntries := lo.Keys(v.Entries)
-		return len(objEntries) == len(vEntries) && slices.Equal(objEntries, vEntries)
+		if len(obj.Entries) != len(v.Entries) {
+			return false
+		}
+		for el := range obj.Entries {
+			if _, found := v.Entries[el]; !found {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }

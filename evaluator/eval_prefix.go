@@ -6,6 +6,9 @@ import (
 )
 
 func (e *Evaluator) evalPrefixExpression(operator string, right object.Object) object.Object {
+	if isError(right) {
+		return right
+	}
 	switch true {
 	// bang operator for all types
 	case right.Type() != object.ERROR_OBJ && operator == "!":

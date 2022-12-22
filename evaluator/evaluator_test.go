@@ -1055,3 +1055,34 @@ func TestEval(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestEval_TwoSum(t *testing.T) {
+	input := `
+	let two_sum = func(nums, target) {
+		let comp;
+		let map = {}
+		for num = range nums {
+			let comp = target - num
+			if (map.contains(num)) {
+				<- [num, comp]
+			}
+			map.add(comp)
+		}
+	}
+
+	let nums = [2,7,11,15]
+	let target = 9
+	let res = two_sum(nums, target)
+	let exp = {2, 7}
+	println(res)
+	println("(res == [7, 2]) = ", res == [7, 2])
+	println("(res.set() == exp) = ",res.set() == exp)
+	res
+`
+
+	evaluated := testEval(input)
+	exp := []string{"7", "2"}
+	if !testObject(t, evaluated, exp) {
+		t.Fatalf("expected %v, got %v", exp, evaluated.Inspect())
+	}
+}

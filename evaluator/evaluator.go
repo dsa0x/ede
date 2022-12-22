@@ -247,6 +247,9 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 }
 
 func (e *Evaluator) evalPostfixExpression(operator string, left object.Object) object.Object {
+	if isError(left) {
+		return left
+	}
 	if left.Type() == object.INT_OBJ {
 		left := left.(*object.Int)
 		switch operator {
@@ -292,6 +295,14 @@ func (e *Evaluator) booleanObj(boolean bool) *object.Boolean {
 }
 
 func (e *Evaluator) applyFunction(fn object.Object, args []object.Object) object.Object {
+	if isError(fn) {
+		return fn
+	}
+	for _, arg := range args {
+		if isError(arg) {
+			return arg
+		}
+	}
 	switch fn := fn.(type) {
 	case *object.Function:
 		fnEnv := object.NewEnvironment(fn.ParentEnv)

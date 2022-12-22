@@ -6,6 +6,12 @@ import (
 )
 
 func (e *Evaluator) evalInfixExpression(operator string, left, right object.Object) object.Object {
+	if isError(left) {
+		return left
+	}
+	if isError(right) {
+		return right
+	}
 	switch true {
 	case operator == "==": // handle == for all object types
 		if left.Equal(right) {

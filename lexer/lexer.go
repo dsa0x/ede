@@ -181,6 +181,8 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekCharIs('|') {
 			l.readChar()
 			tok = newToken(token.OR_OR, []byte("||")...)
+		} else {
+			tok = newToken(token.ILLEGAL, l.char)
 		}
 	case '!':
 		if l.peekCharIs('=') {

@@ -1,0 +1,18 @@
+// https://leetcode.com/problems/two-sum/
+
+let two_sum = func(nums, target) {
+    let comp;
+    let set = {}
+    for num = range nums {
+        let comp = target - num
+        if (set.contains(num)) {
+            <- [num, comp]
+        }
+        set.add(comp)
+    }
+}
+
+let nums = [2,7,11,15]
+let target = 9
+println(two_sum(nums, target))
+println(two_sum(nums, target) == [7, 2])

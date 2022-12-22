@@ -43,7 +43,9 @@ func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
 	if !p.currTokenIs(token.IDENT) {
 		return nil
 	}
-	expr.Method = p.parseExpr(LOWEST)
+
+	// subtract 1, so that we can parse the closing parenthesis, and we stop there.
+	expr.Method = p.parseExpr(CALL - 1)
 	return expr
 }
 

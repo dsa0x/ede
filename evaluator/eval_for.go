@@ -19,6 +19,9 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 			env.Set(node.Variable.Value, e.Eval(el, env)) // bound loop variable
 			for _, stmt := range node.Statement.Statements {
 				result = e.Eval(stmt, env)
+				if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {
+					return result
+				}
 			}
 		}
 	case *ast.Identifier:
@@ -29,6 +32,9 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 			env.Set(node.Variable.Value, entry) // bound loop variable
 			for _, stmt := range node.Statement.Statements {
 				result = e.Eval(stmt, env)
+				if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {
+					return result
+				}
 			}
 		}
 	default:
