@@ -335,6 +335,8 @@ func getRawValue(expr ast.Expression) any {
 		return expr.Value
 	case *ast.BooleanLiteral:
 		return expr.Value
+	case *ast.Identifier:
+		return expr
 	}
 	return nil
 }

@@ -65,6 +65,8 @@ func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Find(eval)
 	case "join":
 		return a.Join(eval)
+	case "clear":
+		return a.Clear()
 	}
 	return nil
 }
@@ -275,6 +277,18 @@ func (a *Array) Merge() *Builtin {
 				}
 				*a.Entries = append(*a.Entries, *fn.Entries...)
 			}
+			return a
+		},
+	}
+}
+
+func (a *Array) Clear() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) > 0 {
+				return countArgumentError("0", len(args))
+			}
+			*a.Entries = (*a.Entries)[:0]
 			return a
 		},
 	}

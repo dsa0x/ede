@@ -759,6 +759,23 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 			`,
 			result: "1 2 3 4 5 6",
 		},
+		{
+			input: `
+			let foo = [1, 2, 3];
+			let len = foo.length();
+			len
+			`,
+			result: 3,
+		},
+		{
+			input: `
+			let foo = [1, 2, 3];
+			foo.clear();
+			let len = foo.length();
+			len
+			`,
+			result: 0,
+		},
 	}
 
 	for i, tt := range tests {
@@ -893,7 +910,19 @@ func TestEvalStatements_SetOperations(t *testing.T) {
 		},
 		{
 			input: `
-			let foo = {1, 2, 3};
+			let one = 1;
+			let two = one + one;
+			let three = 3;
+			let foo = {one, two, three};
+			let found = foo.contains(1);
+			found
+			`,
+			result: true,
+		},
+		{
+			input: `
+			let three = 3;
+			let foo = {1, 2, three};
 			let found = foo.contains(4);
 			found
 			`,
@@ -915,6 +944,89 @@ func TestEvalStatements_SetOperations(t *testing.T) {
 			len
 			`,
 			result: 0,
+		},
+		{
+			input: `
+			let foo = {1, 2, 2, 3, 3, 3, 3, "3", "3"};
+			foo.length();
+			`,
+			result: 4,
+		},
+		{
+			input: `
+			let foo = {1, 2};
+			foo.add(4)
+			foo.add(1)
+			foo.length()
+			`,
+			result: 3,
+		},
+		{
+			input: `
+			let foo = {1, 2, 3};
+			foo.delete(3)
+			foo.length()
+			`,
+			result: 2,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if err, ok := tt.result.(error); ok {
+				if errObj, ok := evaluated.(*object.Error); ok {
+					if !strings.Contains(errObj.Message, err.Error()) {
+						t.Fatalf("expected \"%s\" to contain error \"%s\"", errObj.Message, err.Error())
+					}
+				} else {
+					t.Fatalf("expected object to be of type *object.Error, got %T", evaluated)
+				}
+				return
+			}
+			if tt.result == false {
+				if evaluated, ok := evaluated.(*object.Boolean); ok {
+					if evaluated.Value == false {
+						return
+					}
+				}
+			}
+			if !testObject(t, evaluated, tt.result) {
+				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
+			}
+		})
+	}
+}
+
+func TestEvalStatements_SetOperations_Error(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `
+			let arr = [1,2]
+			let foo = {1, 2, arr};
+			let found = foo.contains(1);
+			found
+			`,
+			result: errors.New("invalid set entry"),
+		},
+		{
+			input: `
+			let foo = {1, 2, 3};
+			let found = foo.contains([1,2]);
+			found
+			`,
+			result: false,
+		},
+		{
+			input: `
+			let foo = {1, 2, 3};
+			foo.delete([1,2]);
+			`,
+			result: errors.New("cannot delete non-hashable"),
 		},
 	}
 

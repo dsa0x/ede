@@ -15,6 +15,7 @@ var (
 
 type Evaluator struct {
 	pos token.Pos
+	err *object.Error
 }
 
 func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
@@ -91,7 +92,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		entries := e.evalSet(node.Elements, env)
 		for key := range entries {
 			if key == object.EmptyHashKey {
-				return object.FromHashKey(key)
+				return e.err
 			}
 		}
 		return &object.Set{Entries: entries}
@@ -162,10 +163,11 @@ func (e *Evaluator) evalSet(args map[ast.Expression]struct{}, env *object.Enviro
 		keyObj := e.Eval(key, env)
 		hashKey := object.ToHashKey(keyObj)
 		if hashKey == object.EmptyHashKey {
-			keyObj = object.NewErrorWithMsg(fmt.Sprintf("invalid set entry '%s'", keyObj.Inspect()))
+			e.err = object.NewErrorWithMsg(fmt.Sprintf("invalid set entry '%s'", keyObj.Inspect()))
+			keyObj = e.err
 		}
 
-		if isError(keyObj) {
+		if isError(e.err) {
 			result[object.EmptyHashKey] = struct{}{}
 			return result
 		}
@@ -328,7 +330,11 @@ func isTruthy(obj object.Object) bool {
 
 func isError(obj object.Object) bool {
 	if obj != nil {
-		return obj.Type() == object.ERROR_OBJ
+		errObj, ok := obj.(*object.Error)
+		if !ok {
+			return false
+		}
+		return errObj != nil
 	}
 	return false
 }

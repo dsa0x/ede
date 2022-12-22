@@ -3,6 +3,9 @@ package object
 import (
 	"bytes"
 	"strings"
+
+	"github.com/samber/lo"
+	"golang.org/x/exp/slices"
 )
 
 type Set struct{ Entries map[HashKey]struct{} }
@@ -21,23 +24,20 @@ func (v *Set) Inspect() string {
 }
 
 func (v *Set) Equal(obj Object) bool {
-	// if obj, ok := obj.(*Set); ok {
-	// 	for key, self := range v.Entries {
-	// 		entry, found := obj.Entries[key]
-	// 		if !found {
-	// 			return false
-	// 		}
-	// 		if !self.Equal(key) {
-	// 			return false
-	// 		}
-	// 	}
-	// 	return true
-	// }
+	if obj, ok := obj.(*Set); ok {
+		objEntries := lo.Keys(obj.Entries)
+		vEntries := lo.Keys(v.Entries)
+		return len(objEntries) == len(vEntries) && slices.Equal(objEntries, vEntries)
+	}
 	return false
 }
 
 func (a *Set) GetMethod(name string, eval Evaluator) *Builtin {
 	switch name {
+	case "add":
+		return a.Add()
+	case "delete":
+		return a.Delete()
 	case "contains":
 		return a.Contains()
 	case "items":
@@ -53,6 +53,46 @@ func (a *Set) GetMethod(name string, eval Evaluator) *Builtin {
 	return nil
 }
 
+func (a *Set) Add() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) < 1 {
+				return countArgumentError(">0", len(args))
+			}
+			for _, arg := range args {
+				key := ToHashKey(arg)
+				if key == EmptyHashKey {
+					return NewErrorWithMsg("cannot add non-hashable %v item to set", arg.Inspect())
+				}
+				a.Entries[key] = struct{}{}
+			}
+			return a
+		},
+	}
+}
+
+func (a *Set) Delete() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) < 1 {
+				return countArgumentError(">0", len(args))
+			}
+			keys := []HashKey{}
+			for _, arg := range args {
+				key := ToHashKey(arg)
+				if key == EmptyHashKey {
+					return NewErrorWithMsg("cannot delete non-hashable %v item to set", arg.Inspect())
+				}
+				keys = append(keys, key)
+			}
+			for _, key := range keys {
+				delete(a.Entries, key)
+			}
+			return a
+		},
+	}
+}
+
 func (a *Set) Contains() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
@@ -62,7 +102,7 @@ func (a *Set) Contains() *Builtin {
 
 			key, ok := args[0].(Hashable)
 			if !ok {
-				return invalidKeyError(key.Inspect())
+				return FALSE
 			}
 			if _, ok := a.Entries[key.HashKey()]; ok {
 				return TRUE

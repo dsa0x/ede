@@ -38,7 +38,9 @@ func (p *Parser) parseStmt() ast.Statement {
 		p.advanceToken()
 		return p.parseStmt()
 	case token.SINGLE_COMMENT:
-		return &ast.CommentStmt{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
+		stmt := &ast.CommentStmt{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
+		p.advanceToken()
+		return stmt
 	}
 	return p.parseExpressionStmt()
 }
