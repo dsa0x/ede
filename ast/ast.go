@@ -138,6 +138,12 @@ type (
 		ValuePos token.Pos
 	}
 
+	SetLiteral struct {
+		Token    token.Token
+		Elements map[Expression]struct{}
+		ValuePos token.Pos
+	}
+
 	InfixExpression struct {
 		Left     Expression
 		Right    Expression
@@ -205,6 +211,7 @@ func (s *StringLiteral) stmtNode()          {}
 func (s *IntegerLiteral) stmtNode()         {}
 func (s *ArrayLiteral) stmtNode()           {}
 func (s *HashLiteral) stmtNode()            {}
+func (s *SetLiteral) stmtNode()             {}
 func (s *BooleanLiteral) stmtNode()         {}
 func (s *FloatLiteral) stmtNode()           {}
 func (s *Identifier) stmtNode()             {}
@@ -224,6 +231,7 @@ func (s *FunctionLiteral) exprNode()        {}
 func (s *IntegerLiteral) exprNode()         {}
 func (s *ArrayLiteral) exprNode()           {}
 func (s *HashLiteral) exprNode()            {}
+func (s *SetLiteral) exprNode()             {}
 func (s *BooleanLiteral) exprNode()         {}
 func (s *FloatLiteral) exprNode()           {}
 func (s *Identifier) exprNode()             {}
@@ -249,6 +257,7 @@ func (s *FunctionLiteral) Pos() token.Pos        { return s.ValuePos }
 func (s *IntegerLiteral) Pos() token.Pos         { return s.ValuePos }
 func (s *ArrayLiteral) Pos() token.Pos           { return s.ValuePos }
 func (s *HashLiteral) Pos() token.Pos            { return s.ValuePos }
+func (s *SetLiteral) Pos() token.Pos             { return s.ValuePos }
 func (s *BooleanLiteral) Pos() token.Pos         { return s.ValuePos }
 func (s *FloatLiteral) Pos() token.Pos           { return s.ValuePos }
 func (s *Identifier) Pos() token.Pos             { return s.ValuePos }
@@ -275,6 +284,7 @@ func (s *FunctionLiteral) Literal() string  { return s.Token.Literal } //TODO
 func (s *IntegerLiteral) Literal() string   { return fmt.Sprint(s.Value) }
 func (s *ArrayLiteral) Literal() string     { return "" } // TODO
 func (s *HashLiteral) Literal() string      { return "" } // TODO
+func (s *SetLiteral) Literal() string       { return "" } // TODO
 func (s *BooleanLiteral) Literal() string   { return fmt.Sprint(s.Value) }
 func (s *FloatLiteral) Literal() string     { return fmt.Sprint(s.Value) }
 func (s *Identifier) Literal() string       { return s.Value }
@@ -307,6 +317,7 @@ func (s *FunctionLiteral) TokenType() token.TokenType        { return s.Token.Ty
 func (s *IntegerLiteral) TokenType() token.TokenType         { return s.Token.Type }
 func (s *ArrayLiteral) TokenType() token.TokenType           { return s.Token.Type }
 func (s *HashLiteral) TokenType() token.TokenType            { return s.Token.Type }
+func (s *SetLiteral) TokenType() token.TokenType             { return s.Token.Type }
 func (s *BooleanLiteral) TokenType() token.TokenType         { return s.Token.Type }
 func (s *FloatLiteral) TokenType() token.TokenType           { return s.Token.Type }
 func (s *Identifier) TokenType() token.TokenType             { return s.Token.Type }

@@ -207,6 +207,14 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 }
 
 func testObject(t *testing.T, obj object.Object, evaluated any) bool {
+	if obj, ok := obj.(*object.Hash); ok {
+		evaluated := evaluated.([]string)
+		exp := []string{}
+		for entry := range obj.Entries {
+			exp = append(exp, entry)
+		}
+		return slices.Equal(exp, evaluated)
+	}
 	switch evaluated := evaluated.(type) {
 	case int, int32, int64, uint:
 		ev, _ := strconv.ParseInt(fmt.Sprint(evaluated), 10, 64)
@@ -257,6 +265,12 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 			return false
 		}
 		return obj.Value
+	case string:
+		obj, ok := obj.(*object.String)
+		if !ok {
+			return false
+		}
+		return obj.Value == evaluated
 	}
 	return false
 }
@@ -737,6 +751,14 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 			`,
 			result: 2,
 		},
+		{
+			input: `
+			let arr = [1,2,3,4,5,6];
+			let arr_str = arr.join(" ");
+			arr_str;
+			`,
+			result: "1 2 3 4 5 6",
+		},
 	}
 
 	for i, tt := range tests {
@@ -809,14 +831,91 @@ func TestEvalStatements_HashOperations(t *testing.T) {
 			`,
 			result: 2,
 		},
-		// {
-		// 	input: `
-		// 	let hash = {"a":"b","foo":2,"bar":3};
-		// 	hash.clear();
-		// 	hash
-		// 	`,
-		// 	result: []string{},
-		// },
+		{
+			input: `
+			let hash = {"a":"b","foo":2,"bar":3};
+			hash.set("foo", 3);
+			let foo = hash.get("foo");
+			foo
+			`,
+			result: 3,
+		},
+		{
+			input: `
+			let hash = {"a":"b","foo":2,"bar":3};
+			hash.clear();
+			hash
+			`,
+			result: []string{},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if err, ok := tt.result.(error); ok {
+				if errObj, ok := evaluated.(*object.Error); ok {
+					if !strings.Contains(errObj.Message, err.Error()) {
+						t.Fatalf("expected \"%s\" to contain error \"%s\"", errObj.Message, err.Error())
+					}
+				} else {
+					t.Fatalf("expected object to be of type *object.Error, got %T", evaluated)
+				}
+				return
+			}
+			if tt.result == false {
+				if evaluated, ok := evaluated.(*object.Boolean); ok {
+					if evaluated.Value == false {
+						return
+					}
+				}
+			}
+			if !testObject(t, evaluated, tt.result) {
+				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
+			}
+		})
+	}
+}
+
+func TestEvalStatements_SetOperations(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `
+			let foo = {1, 2, 3};
+			let found = foo.contains(1);
+			found
+			`,
+			result: true,
+		},
+		{
+			input: `
+			let foo = {1, 2, 3};
+			let found = foo.contains(4);
+			found
+			`,
+			result: false,
+		},
+		{
+			input: `
+			let foo = {1, 2, 3};
+			let len = foo.length();
+			len
+			`,
+			result: 3,
+		},
+		{
+			input: `
+			let foo = {1, 2, 3};
+			foo.clear();
+			let len = foo.length();
+			len
+			`,
+			result: 0,
+		},
 	}
 
 	for i, tt := range tests {
@@ -850,26 +949,10 @@ func TestEval(t *testing.T) {
 	t.Skip()
 	input := `
 	let arr = [1..10];
-	let double = func(x) {
-		<- x + x;
-	};
-	arr.push(5);
-	// let arrx = arr.map(double);
-	// arrx[1]
-	println(arr);
 	`
 
-	input = `
-	let double = func(x) { x + x; };
-	let arr = [1,2,"foo"];
-	arr.map(double);
-	println(arr);
-	arr;
-	`
-
-	input = `let foo = {"a":"b"};
-	let age = foo.contains("a")
-	age
+	input = `let foo = (1,2);
+	foo
 	`
 
 	evaluated := testEval(input)

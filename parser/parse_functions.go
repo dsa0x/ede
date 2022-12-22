@@ -14,14 +14,27 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 		p.addError("expected closing parenthesis token ')', got '%s'", p.currToken.Literal)
 		return nil
 	}
-	for {
-		switch p.currToken.Type {
-		case token.SEMICOLON, token.NEWLINE:
-			p.advanceToken()
-		default:
-			return expr
+	p.eatEndToken()
+	return expr
+}
+
+func (p *Parser) parseSetExpression(startPos token.Pos) ast.Expression {
+	expr := &ast.SetLiteral{Token: p.prevToken, ValuePos: startPos}
+	set := make(map[ast.Expression]struct{})
+	elements := p.parseArguments(token.RBRACE)
+	for _, el := range elements {
+		if val := getRawValue(el); val == nil {
+			p.addError("invalid set entry. entry is of type %T", el)
+			return nil
 		}
+		set[el] = struct{}{}
 	}
+	if !p.advanceCurrTokenIs(token.RBRACE) {
+		p.addError("expected closing parenthesis token '}', got '%s'", p.currToken.Literal)
+		return nil
+	}
+	expr.Elements = set
+	return expr
 }
 
 func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
@@ -259,6 +272,11 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 	if !p.advanceCurrTokenIs(token.LBRACE) { // eat opening token
 		return nil
 	}
+
+	if !p.nextTokenIs(token.COLON) { // if it is a set (e.g. {1,2,3})
+		return p.parseSetExpression(expr.ValuePos)
+	}
+
 	for !p.currTokenIs(token.EOF) && !p.currTokenIs(token.RBRACE) {
 		key := p.parseExpr(LOWEST)
 		rawValue := getRawValue(key)
@@ -307,6 +325,8 @@ func (p *Parser) parseArguments(endToken token.TokenType) []ast.Expression {
 	return exprs
 }
 
+// getRawValue returns the raw value of an expression
+// typically, these are the literals that can be comparable and also easily stringified (i.e. string, int, bool)
 func getRawValue(expr ast.Expression) any {
 	switch expr := expr.(type) {
 	case *ast.StringLiteral:

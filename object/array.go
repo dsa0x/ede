@@ -49,6 +49,8 @@ func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.First()
 	case "last":
 		return a.Last()
+	case "length":
+		return a.Length()
 	case "reverse":
 		return a.Reverse()
 	case "map":
@@ -61,6 +63,8 @@ func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Contains(eval)
 	case "find":
 		return a.Find(eval)
+	case "join":
+		return a.Join(eval)
 	}
 	return nil
 }
@@ -109,6 +113,14 @@ func (a *Array) Last() *Builtin {
 	}
 }
 
+func (a *Array) Length() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			return &Int{Value: int64(len(*a.Entries))}
+		},
+	}
+}
+
 func (a *Array) Reverse() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
@@ -135,6 +147,29 @@ func (a *Array) Contains(evaluator Evaluator) *Builtin {
 	}
 }
 
+func (a *Array) Join(evaluator Evaluator) *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) != 1 {
+				return countArgumentError("1", len(args))
+			}
+			strArg, ok := args[0].(*String)
+			if !ok {
+				return methodExpectArgumentError("join", "string", string(args[0].Type()))
+			}
+			entriesStr := make([]string, 0, len(*a.Entries))
+			for idx, entry := range *a.Entries {
+				str := ToRawValue(entry)
+				if str == "" {
+					return NewErrorWithMsg("cannot join non string-like item at index %d", idx)
+				}
+				entriesStr = append(entriesStr, str)
+			}
+			return &String{Value: strings.Join(entriesStr, strArg.Value)}
+		},
+	}
+}
+
 func (a *Array) Find(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
@@ -143,7 +178,7 @@ func (a *Array) Find(evaluator Evaluator) *Builtin {
 			}
 			fn, ok := args[0].(*Function)
 			if !ok {
-				return NewError(fmt.Errorf("method 'find' expects a function argument, got %T", fn))
+				return methodExpectArgumentError("find", "function", string(args[0].Type()))
 			}
 			if len(fn.Params) != 1 {
 				NewError(fmt.Errorf("function should have 1 argument, got %d", len(fn.Params)))
@@ -174,7 +209,7 @@ func (a *Array) Map(evaluator Evaluator) *Builtin {
 			}
 			fn, ok := args[0].(*Function)
 			if !ok {
-				return NewError(fmt.Errorf("method 'map' expects a function argument, got %T", fn))
+				return methodExpectArgumentError("map", "function", string(args[0].Type()))
 			}
 
 			if len(fn.Params) != 1 {
@@ -202,7 +237,7 @@ func (a *Array) Filter(evaluator Evaluator) *Builtin {
 			}
 			fn, ok := args[0].(*Function)
 			if !ok {
-				return NewError(fmt.Errorf("method 'filter' expects a function argument, got %T", fn))
+				return methodExpectArgumentError("filter", "function", string(args[0].Type()))
 			}
 
 			if len(fn.Params) != 1 {
@@ -247,4 +282,8 @@ func (a *Array) Merge() *Builtin {
 
 func countArgumentError(exp string, got int) *Error {
 	return NewError(fmt.Errorf("expected %s argument(s), got %d", exp, got))
+}
+
+func methodExpectArgumentError(methodName, argType, gotType string) *Error {
+	return NewError(fmt.Errorf("method '%s' expects a %s argument, got %s", methodName, argType, gotType))
 }

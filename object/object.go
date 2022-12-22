@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Type string
@@ -17,6 +18,8 @@ var (
 	RETURN_VALUE_OBJ Type = "RETURN_VALUE"
 	BUILTIN_OBJ      Type = "BUILTIN"
 	ARRAY_OBJ        Type = "ARRAY"
+	HASH_OBJ         Type = "HASH"
+	SET_OBJ          Type = "SET"
 
 	NULL  = &Null{}
 	TRUE  = &Boolean{Value: true}
@@ -27,6 +30,15 @@ type Object interface {
 	Type() Type
 	Inspect() string
 	Equal(obj Object) bool
+}
+
+type HashKey struct {
+	Type  Type
+	Value string
+}
+type Hashable interface {
+	HashKey() HashKey
+	Inspect() string
 }
 
 func (*String) Type() Type      { return STRING_OBJ }
@@ -93,15 +105,41 @@ func ToBoolean(obj Object) bool {
 }
 
 func ToRawValue(obj Object) string {
-	switch obj := obj.(type) {
-	case *String:
-		return obj.Value
-	case *Boolean:
-		return fmt.Sprint(obj.Value)
-	case *Int:
-		return fmt.Sprint(obj.Value)
-	case *Float:
-		return fmt.Sprint(obj.Value)
+	if obj, ok := obj.(Hashable); ok {
+		return obj.HashKey().Value
 	}
 	return ""
+}
+
+func ToHashKey(obj Object) HashKey {
+	if obj, ok := obj.(Hashable); ok {
+		return obj.HashKey()
+	}
+	return HashKey{}
+}
+
+func FromHashKey(key HashKey) Object {
+	switch key.Type {
+	case STRING_OBJ:
+		return &String{Value: key.Value}
+	case INT_OBJ:
+		intVal, _ := strconv.ParseInt(key.Value, 10, 64)
+		return &Int{Value: intVal}
+	case BOOLEAN_OBJ:
+		boolVal, _ := strconv.ParseBool(key.Value)
+		return &Boolean{Value: boolVal}
+	}
+	return nil
+}
+
+var EmptyHashKey = HashKey{}
+
+func (v *String) HashKey() HashKey {
+	return HashKey{Type: v.Type(), Value: v.Value}
+}
+func (v *Int) HashKey() HashKey {
+	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
+}
+func (v *Boolean) HashKey() HashKey {
+	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
 }

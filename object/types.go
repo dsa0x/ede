@@ -2,7 +2,7 @@ package object
 
 import (
 	"ede/ast"
-	"strings"
+	"fmt"
 
 	"golang.org/x/exp/constraints"
 )
@@ -25,14 +25,10 @@ type Function struct {
 type BuiltinFn func(args ...Object) Object
 type Builtin struct{ Fn BuiltinFn }
 
-func NewErrorWithMsg(msgs ...string) *Error {
-	return &Error{Message: strings.Join(msgs, "; ")}
+func NewErrorWithMsg(msg string, format ...any) *Error {
+	return &Error{Message: fmt.Sprintf(msg, format...)}
 }
 
-func NewError(msgs ...error) *Error {
-	messages := []string{}
-	for _, msg := range msgs {
-		messages = append(messages, msg.Error())
-	}
-	return NewErrorWithMsg(messages...)
+func NewError(msg error) *Error {
+	return NewErrorWithMsg(msg.Error())
 }

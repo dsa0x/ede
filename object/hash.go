@@ -10,7 +10,7 @@ import (
 
 type Hash struct{ Entries map[string]Object }
 
-func (*Hash) Type() Type { return ARRAY_OBJ }
+func (*Hash) Type() Type { return HASH_OBJ }
 func (v *Hash) Inspect() string {
 	buf := new(bytes.Buffer)
 	buf.WriteString("{\n")
@@ -22,6 +22,7 @@ func (v *Hash) Inspect() string {
 	buf.WriteString("}")
 	return buf.String()
 }
+
 func (v *Hash) Equal(obj Object) bool {
 	if obj, ok := obj.(*Hash); ok {
 		for key, self := range v.Entries {
@@ -41,7 +42,7 @@ func (v *Hash) Equal(obj Object) bool {
 func (a *Hash) GetMethod(name string, eval Evaluator) *Builtin {
 	switch name {
 	case "contains":
-		return a.Contains(eval)
+		return a.Contains()
 	case "keys":
 		return a.Keys()
 	case "items":
@@ -50,11 +51,13 @@ func (a *Hash) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Clear()
 	case "get":
 		return a.Get()
+	case "set":
+		return a.Set()
 	}
 	return nil
 }
 
-func (a *Hash) Contains(evaluator Evaluator) *Builtin {
+func (a *Hash) Contains() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
@@ -88,6 +91,22 @@ func (a *Hash) Get() *Builtin {
 				return NULL
 			}
 			return entry
+		},
+	}
+}
+
+func (a *Hash) Set() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) != 2 {
+				return countArgumentError("2", len(args))
+			}
+			key := ToRawValue(args[0])
+			if key == "" {
+				return invalidKeyError(key)
+			}
+			a.Entries[key] = args[1]
+			return NULL
 		},
 	}
 }

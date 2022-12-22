@@ -87,6 +87,14 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 			}
 		}
 		return &object.Hash{Entries: entries}
+	case *ast.SetLiteral:
+		entries := e.evalSet(node.Elements, env)
+		for key := range entries {
+			if key == object.EmptyHashKey {
+				return object.FromHashKey(key)
+			}
+		}
+		return &object.Set{Entries: entries}
 	case *ast.ReassignmentStmt:
 		if _, found := env.Get(node.Name.Value); !found {
 			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Pos())
@@ -142,6 +150,26 @@ func (e *Evaluator) evalPairs(args map[ast.Expression]ast.Expression, env *objec
 			return result
 		}
 		result[keyString] = valueObj
+	}
+
+	return result
+}
+
+func (e *Evaluator) evalSet(args map[ast.Expression]struct{}, env *object.Environment) map[object.HashKey]struct{} {
+	result := make(map[object.HashKey]struct{})
+
+	for key := range args {
+		keyObj := e.Eval(key, env)
+		hashKey := object.ToHashKey(keyObj)
+		if hashKey == object.EmptyHashKey {
+			keyObj = object.NewErrorWithMsg(fmt.Sprintf("invalid set entry '%s'", keyObj.Inspect()))
+		}
+
+		if isError(keyObj) {
+			result[object.EmptyHashKey] = struct{}{}
+			return result
+		}
+		result[hashKey] = struct{}{}
 	}
 
 	return result
