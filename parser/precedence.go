@@ -24,6 +24,8 @@ const (
 
 func (p *Parser) precedence(tokenType token.TokenType) int {
 	switch tokenType {
+	case token.AND_AND, token.OR_OR:
+		return COND
 	case token.ASSIGN, token.PLUS_EQUAL, token.MINUS_EQUAL:
 		return ASSIGN
 	case token.EQ, token.NEQ:

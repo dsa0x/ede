@@ -172,6 +172,16 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.SLASH, l.char)
 		}
+	case '&':
+		if l.peekCharIs('&') {
+			l.readChar()
+			tok = newToken(token.AND_AND, []byte("&&")...)
+		}
+	case '|':
+		if l.peekCharIs('|') {
+			l.readChar()
+			tok = newToken(token.OR_OR, []byte("||")...)
+		}
 	case '!':
 		if l.peekCharIs('=') {
 			l.readChar()

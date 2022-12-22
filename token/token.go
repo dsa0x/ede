@@ -41,6 +41,8 @@ const (
 	DEC         = "--"
 	INC         = "++"
 	MODULO      = "%"
+	AND_AND     = "&&"
+	OR_OR       = "||"
 
 	// Delimiters
 	COMMA     = ","

@@ -7,6 +7,11 @@ import (
 
 func (e *Evaluator) evalInfixExpression(operator string, left, right object.Object) object.Object {
 	switch true {
+	case operator == "==": // handle == for all object types
+		if left.Equal(right) {
+			return TRUE
+		}
+		return FALSE
 	case left.Type() == object.INT_OBJ && right.Type() == object.INT_OBJ:
 		left := left.(*object.Int)
 		right := right.(*object.Int)
@@ -57,8 +62,6 @@ func (e *Evaluator) evalIntegerInfixExpression(operator string, left, right *obj
 		return e.booleanObj(left.Value >= right.Value)
 	case "<=":
 		return e.booleanObj(left.Value <= right.Value)
-	case "==":
-		return e.booleanObj(left.Value == right.Value)
 	case "!=":
 		return e.booleanObj(left.Value != right.Value)
 	}
@@ -79,8 +82,6 @@ func (e *Evaluator) evalFloatInfixExpression(operator string, left, right *objec
 		return e.booleanObj(left.Value > right.Value)
 	case "<":
 		return e.booleanObj(left.Value < right.Value)
-	case "==":
-		return e.booleanObj(left.Value == right.Value)
 	case "!=":
 		return e.booleanObj(left.Value != right.Value)
 	}
