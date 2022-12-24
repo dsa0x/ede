@@ -16,7 +16,7 @@ func main() {
 	let a = 10;
 	let add = func(x) {
 		println("a", a, "\n");
-		<- x + a;
+		return x + a;
 	};
 	a = a * 2;
 	a = add(add(10));

@@ -12,7 +12,7 @@ for i = range [1..10] {
 println("name is", name, "and age is", age);
 
 let obj = match (json.parse(`{"subjects":["english", "french"]}`)) {
-    case ERROR: <- printf("subjects is not json", ERROR)
+    case ERROR: return printf("subjects is not json", ERROR)
 }
 
 let best_subject = obj.subjects[1]

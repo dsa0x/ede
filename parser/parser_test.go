@@ -69,9 +69,9 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 
 func TestReturnExpression(t *testing.T) {
 	input := `
-   <- 5;
-   <- 10;
-   <- 993322;
+   return 5;
+   return 10;
+   return 993322;
    `
 	l := lexer.New(input)
 	p := New(l)
@@ -89,7 +89,7 @@ func TestReturnExpression(t *testing.T) {
 			continue
 		}
 
-		exp := fmt.Sprintf("%s%s", "<-", returnStmt.Expr.Literal())
+		exp := fmt.Sprintf("%s%s", "return", returnStmt.Expr.Literal())
 		if returnStmt.Literal() != exp {
 			t.Errorf("returnStmt.Literal not '%s', got '%q'", exp, returnStmt.Literal())
 		}
@@ -745,7 +745,7 @@ func TestParsingImportJson(t *testing.T) {
 func TestParsingMatchExpressions(t *testing.T) {
 	input := `
 	let obj = match ((10*10).type()) {
-	case ERROR: <- println(ERROR)
+	case ERROR: return println(ERROR)
 	default: println(obj)
 	}`
 

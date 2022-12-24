@@ -264,19 +264,19 @@ func TestReturnStatements(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"<- 10;", 10},
-		{"<- 10; 9;", 10},
-		{"<- 2 * 5; 9;", 10},
-		{"9; <- 2 * 5; 9;", 10},
-		{"if (10 > 1) { <- 10; }", 10},
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"9; return 2 * 5; 9;", 10},
+		{"if (10 > 1) { return 10; }", 10},
 		{
 			`
 		if (10 > 1) {
 		  if (10 > 2) {
-		    <- 10;
+		    return 10;
 		  }
 
-		  <- 1;
+		  return 1;
 		}
 		`,
 			10,
@@ -284,7 +284,7 @@ func TestReturnStatements(t *testing.T) {
 		{
 			`
 		let f = func(x) {
-		  <- x;
+		  return x;
 		  x + 10;
 		};
 		f(10);`,
@@ -294,8 +294,8 @@ func TestReturnStatements(t *testing.T) {
 			`
 		let f = func(x) {
 		   let result = x + 10;
-		   <- result;
-		   <- 10;
+		   return result;
+		   return 10;
 		};
 		f(10);`,
 			20,
@@ -430,7 +430,7 @@ func TestEvalStatements(t *testing.T) {
 			let a = 10;
 		let add = func(x) {
 			println("a", a);
-			<- x + a;
+			return x + a;
 		};
 		add(add(10));
 		`,
@@ -439,7 +439,7 @@ func TestEvalStatements(t *testing.T) {
 		{
 			input: `let a = 10;
 			let add = func(x) {
-				<- x + a;
+				return x + a;
 			};
 			a = add(add(10));
 			a + a;
@@ -449,7 +449,7 @@ func TestEvalStatements(t *testing.T) {
 		{
 			input: `let a = 10;
 			let add = func(x) {
-				<- x + a;
+				return x + a;
 			};
 			a = add(add(10));
 			add(a + a) + add(a + a);
@@ -459,7 +459,7 @@ func TestEvalStatements(t *testing.T) {
 		{
 			input: `let a = 10.5;
 			let add = func(x) {
-				<- x + a;
+				return x + a;
 			};
 			a = add(add(10));
 			a;
@@ -1079,7 +1079,7 @@ func TestEval(t *testing.T) {
 	input = `// https://leetcode.com/problems/valid-parentheses/
 	let matches = ["{}","()","[]"]
 	
-	let is_match = func(el) { <- matches.contains(el) }
+	let is_match = func(el) { return matches.contains(el) }
 	
 	let isValid = func(input) {
 		let stack = []
@@ -1094,7 +1094,7 @@ func TestEval(t *testing.T) {
 			}
 		}
 	
-		<- stack.length() == 0
+		return stack.length() == 0
 	}
 	
 	isValid("()[]{}")
@@ -1113,7 +1113,7 @@ func TestEval_Match(t *testing.T) {
 		input := `
 	println("starting")
 	let obj = match (10*"a") {
-	case obj.type() == ERROR: <- ERROR
+	case obj.type() == ERROR: return ERROR
 	default: println(obj)
 	}
 	println("should not get here")
@@ -1129,7 +1129,7 @@ func TestEval_Match(t *testing.T) {
 		input := `
 	println("starting")
 	let obj = match (10*10) {
-	case obj.type() == ERROR: <- println(ERROR)
+	case obj.type() == ERROR: return println(ERROR)
 	default: println(obj)
 	}
 	println("should get here")
@@ -1150,7 +1150,7 @@ func TestEval_TwoSum(t *testing.T) {
 		for num = range nums {
 			let comp = target - num
 			if (map.contains(num)) {
-				<- [num, comp]
+				return [num, comp]
 			}
 			map.add(comp)
 		}

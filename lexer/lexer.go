@@ -60,10 +60,19 @@ func (l *Lexer) readDigit() []byte {
 	return l.input[start:l.currPos]
 }
 
-func (l *Lexer) readString(end byte) []byte {
+func (l *Lexer) readString() []byte {
 	l.readChar() // read the beginner
 	start := l.currPos
-	for l.char != end && l.readPos < len(l.input) && l.char != '\n' {
+	for l.char != '"' && l.readPos < len(l.input) && l.char != '\n' {
+		l.readChar()
+	}
+	return l.input[start:l.currPos]
+}
+
+func (l *Lexer) readStringLiteral() []byte {
+	l.readChar() // read the beginner
+	start := l.currPos
+	for l.char != '`' && l.readPos < len(l.input) {
 		l.readChar()
 	}
 	return l.input[start:l.currPos]
@@ -208,13 +217,13 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.LT, l.char)
 		}
 	case '"':
-		str := l.readString(l.char)
+		str := l.readString()
 		tok = newToken(token.STRING, str...)
 		if l.char != '"' {
 			tok = newToken(token.ILLEGAL, str...)
 		}
 	case '`':
-		str := l.readString(l.char)
+		str := l.readStringLiteral()
 		tok = newToken(token.STRING, str...)
 		if l.char != '`' {
 			tok = newToken(token.ILLEGAL, str...)

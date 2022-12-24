@@ -96,9 +96,9 @@ func TestNextTokenStruct(t *testing.T) {
 func TestNextTokenConditionals(t *testing.T) {
 	input := `
 	if name > 1 {
-		<- Error();
+		return Error();
 	} else {
-		<- 10;
+		return 10;
 	};
 	`
 
@@ -111,7 +111,7 @@ func TestNextTokenConditionals(t *testing.T) {
 		{token.GT, ">"},
 		{token.INT, "1"},
 		{token.LBRACE, "{"},
-		{token.RETURN, "<-"},
+		{token.RETURN, "return"},
 		{token.IDENT, "Error"},
 		{token.LPAREN, "("},
 		{token.RPAREN, ")"},
@@ -119,7 +119,7 @@ func TestNextTokenConditionals(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.ELSE, "else"},
 		{token.LBRACE, "{"},
-		{token.RETURN, "<-"},
+		{token.RETURN, "return"},
 		{token.INT, "10"},
 		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
@@ -144,12 +144,12 @@ func TestNextTokenConditionals(t *testing.T) {
 
 func TestNextTokenFunctions(t *testing.T) {
 	input := `
-	let age = func() { <- 10 };
+	let age = func() { return 10 };
 	// let age = func() { 
 	// 	if name > 1 {
-	// 		<- Error()
+	// 		return Error()
 	// 	}
-	// 	<- 10
+	// 	return 10
 	//  }
 	`
 
@@ -164,7 +164,7 @@ func TestNextTokenFunctions(t *testing.T) {
 		{token.LPAREN, "("},
 		{token.RPAREN, ")"},
 		{token.LBRACE, "{"},
-		{token.RETURN, "<-"},
+		{token.RETURN, "return"},
 		{token.INT, "10"},
 		{token.RBRACE, "}"},
 		{token.SEMICOLON, ";"},

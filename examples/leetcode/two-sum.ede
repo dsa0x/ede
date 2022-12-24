@@ -6,7 +6,7 @@ let two_sum = func(nums, target) {
     for num = range nums {
         let comp = target - num
         if (set.contains(num)) {
-            <- [num, comp]
+            return [num, comp]
         }
         set.add(comp)
     }
