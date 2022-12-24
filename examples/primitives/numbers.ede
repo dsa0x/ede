@@ -1,0 +1,9 @@
+let num = 100;
+num += 20;
+let age = 15 + 15
+println(num-age, "should be '90'")
+
+
+let weight = 75.7
+let margin = 4.3
+println("weight may be", weight-margin, "or", weight+margin)

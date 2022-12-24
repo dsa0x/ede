@@ -8,7 +8,7 @@ import (
 	"github.com/samber/lo"
 )
 
-type Hash struct{ Entries map[string]Object }
+var _ Object = (*Hash)(nil)
 
 func (*Hash) Type() Type { return HASH_OBJ }
 func (v *Hash) Inspect() string {
@@ -164,8 +164,4 @@ func (a *Hash) Clear() *Builtin {
 			return a
 		},
 	}
-}
-
-func invalidKeyError(key string) *Error {
-	return &Error{Message: fmt.Sprintf("invalid key '%s'", key)}
 }

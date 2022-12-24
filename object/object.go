@@ -70,13 +70,11 @@ type Hashable interface {
 func (*Error) Type() Type       { return ERROR_OBJ }
 func (*Null) Type() Type        { return NULL_OBJ }
 func (*ReturnValue) Type() Type { return RETURN_VALUE_OBJ }
-func (*Function) Type() Type    { return FUNCTION_OBJ }
 func (*Builtin) Type() Type     { return BUILTIN_OBJ }
 
 func (v *Error) Inspect() string       { return fmt.Sprint(v.Message) }
 func (v *Null) Inspect() string        { return "null" }
 func (v *ReturnValue) Inspect() string { return v.Value.Inspect() }
-func (v *Function) Inspect() string    { return "fn" }
 func (*Builtin) Inspect() string       { return "builtin fn" }
 
 func (v *Error) Equal(obj Object) bool {
@@ -87,7 +85,6 @@ func (v *Error) Equal(obj Object) bool {
 }
 func (v *Null) Equal(obj Object) bool        { return true }
 func (v *ReturnValue) Equal(obj Object) bool { return false }
-func (v *Function) Equal(obj Object) bool    { return false }
 func (*Builtin) Equal(obj Object) bool       { return false }
 
 func ToBoolean(obj Object) bool {
@@ -134,6 +131,6 @@ func FromHashKey(key HashKey) Object {
 	return nil
 }
 
-func (v *Int) HashKey() HashKey {
-	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
+func invalidKeyError(key string) *Error {
+	return &Error{Message: fmt.Sprintf("invalid key '%s'", key)}
 }

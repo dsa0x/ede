@@ -7,6 +7,7 @@ import (
 	"ede/parser"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -1040,14 +1041,65 @@ func TestEvalStatements_SetOperations_Error(t *testing.T) {
 	}
 }
 
+func TestEval_Files(t *testing.T) {
+	data, err := os.ReadFile("../examples/primitives/string.ede")
+	if err != nil {
+		t.Fatalf("expected no error, got %s", err)
+	}
+	t.Run("true", func(t *testing.T) {
+		evaluated := testEval(string(data))
+		_evaluated, ok := evaluated.(*object.Boolean)
+		if !ok {
+			t.Fatalf("expected a boolean to be returned, got %T", evaluated)
+		}
+		if !_evaluated.Value {
+			t.Fatalf("expected value to be true, got %v", _evaluated.Value)
+		}
+	})
+
+	t.Run("false", func(t *testing.T) {
+		str := strings.Replace(string(data), "let input = \"()[]{}\"", "let input = \"([]{}\"", -1)
+		evaluated := testEval(str)
+		_evaluated, ok := evaluated.(*object.Boolean)
+		if !ok {
+			t.Fatalf("expected a boolean to be returned, got %T", evaluated)
+		}
+		if _evaluated.Value {
+			t.Fatalf("expected value to be false, got %v", _evaluated.Value)
+		}
+	})
+}
+
 func TestEval(t *testing.T) {
 	t.Skip()
 	input := `
 	let arr = [1..10];
 	`
 
-	input = `let foo = (1,2);
-	foo
+	input = `// https://leetcode.com/problems/valid-parentheses/
+	let matches = ["{}","()","[]"]
+	
+	let is_match = func(el) { <- matches.contains(el) }
+	
+	let isValid = func(input) {
+		let stack = []
+		for i = range input.split("") {
+			let top = stack.last()
+			let str = top + i
+			println("str is: ", str)
+			if (is_match(str)) {
+				stack.pop()
+			} else {
+				stack.push(i)
+			}
+		}
+	
+		<- stack.length() == 0
+	}
+	
+	isValid("()[]{}")
+	// println("true: ",isValid("()[]{}"))
+	// println("false: ",isValid("([]{}"))
 	`
 
 	evaluated := testEval(input)

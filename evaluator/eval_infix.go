@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"ede/object"
+	"ede/token"
 	"fmt"
 )
 
@@ -13,7 +14,7 @@ func (e *Evaluator) evalInfixExpression(operator string, left, right object.Obje
 		return right
 	}
 	switch true {
-	case operator == "==": // handle == for all object types
+	case operator == token.EQ: // handle == for all object types
 		if left.Equal(right) {
 			return TRUE
 		}
@@ -38,6 +39,14 @@ func (e *Evaluator) evalInfixExpression(operator string, left, right object.Obje
 		return e.evalFloatInfixExpression(operator, leftFloat, right)
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		left := left.(*object.String)
+		right := right.(*object.String)
+		return e.evalStringInfixExpression(operator, left, right)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.NULL_OBJ:
+		left := left.(*object.String)
+		right := object.NewString("")
+		return e.evalStringInfixExpression(operator, left, right)
+	case left.Type() == object.NULL_OBJ && right.Type() == object.STRING_OBJ:
+		left := object.NewString("")
 		right := right.(*object.String)
 		return e.evalStringInfixExpression(operator, left, right)
 	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:

@@ -2,7 +2,6 @@ package object
 
 import (
 	"ede/ast"
-	"fmt"
 
 	"golang.org/x/exp/constraints"
 )
@@ -10,28 +9,24 @@ import (
 type Number interface {
 	constraints.Integer | constraints.Float
 }
+type (
+	String      struct{ Value string }
+	Float       struct{ Value float64 }
+	Boolean     struct{ Value bool }
+	Null        struct{}
+	Error       struct{ Message string }
+	ReturnValue struct{ Value Object }
+	Hash        struct{ Entries map[string]Object }
 
-type String struct{ Value string }
-type Float struct{ Value float64 }
-type Boolean struct{ Value bool }
-type Null struct{}
-type Error struct{ Message string }
-type ReturnValue struct{ Value Object }
-type Function struct {
-	Params    []*ast.Identifier
-	Body      *ast.BlockStmt
-	ParentEnv *Environment
-}
-type BuiltinFn func(args ...Object) Object
-type Builtin struct{ Fn BuiltinFn }
+	Function struct {
+		Params    []*ast.Identifier
+		Body      *ast.BlockStmt
+		ParentEnv *Environment
+	}
 
-func NewErrorWithMsg(msg string, format ...any) *Error {
-	return &Error{Message: "ERROR: " + fmt.Sprintf(msg, format...)}
-}
-
-func NewError(msg error) *Error {
-	return NewErrorWithMsg(msg.Error())
-}
+	BuiltinFn func(args ...Object) Object
+	Builtin   struct{ Fn BuiltinFn }
+)
 
 func (a *Null) Native() any {
 	return nil

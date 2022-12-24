@@ -101,10 +101,6 @@ func (p *Parser) Parse() *ast.Program {
 			continue
 		}
 		stmt := p.parseStmt()
-		if errstmt, ok := stmt.(*ast.ErrorStmt); ok {
-			prog.ParseErrors = multierror.Append(prog.ParseErrors, fmt.Errorf(errstmt.Value))
-			return prog
-		}
 		if stmt != nil && !reflect.ValueOf(stmt).IsNil() {
 			prog.Statements = append(prog.Statements, stmt)
 		}

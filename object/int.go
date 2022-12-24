@@ -4,6 +4,8 @@ import "fmt"
 
 type Int struct{ Value int64 }
 
+var _ Object = (*Int)(nil)
+
 func (*Int) Type() Type        { return INT_OBJ }
 func (v *Int) Inspect() string { return fmt.Sprint(v.Value) }
 func (v *Int) Equal(obj Object) bool {
@@ -49,4 +51,8 @@ func (a *Int) GetMethod(name string, eval Evaluator) *Builtin {
 		}
 	}
 	return nil
+}
+
+func (v *Int) HashKey() HashKey {
+	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
 }

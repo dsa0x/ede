@@ -93,7 +93,7 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 		ValuePos: p.pos,
 	}
 
-	currPrecedence := p.currPrecedence()
+	operatorPrecedence := p.currPrecedence()
 
 	p.advanceToken()
 	if slices.Contains([]token.TokenType{token.LBRACE, token.LBRACKET}, left.TokenType()) {
@@ -101,9 +101,10 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 		return nil
 	}
 
-	if inf.Right = p.parseExpr(currPrecedence); inf.Right == nil {
+	if inf.Right = p.parseExpr(operatorPrecedence); inf.Right == nil {
 		// if we couldn't parse the right
 		p.addError("invalid right expression %s for operator '%s'", p.currToken.Literal, operator.Literal)
+		p.advanceToken()
 		return nil
 	}
 	return inf

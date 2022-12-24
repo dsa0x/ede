@@ -39,7 +39,7 @@ func (e *Evaluator) evalObjectMethodExpr(obj object.Object, call *ast.CallExpres
 
 	methodableObj, ok := obj.(Methodable)
 	if !ok {
-		return nil
+		return object.NewErrorWithMsg("object type has no methods")
 	}
 	ident := call.Function.(*ast.Identifier)
 	if ident.Value == "equal" {

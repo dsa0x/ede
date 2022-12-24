@@ -1,0 +1,21 @@
+// https://leetcode.com/problems/valid-parentheses/
+let matches = ["{}","()","[]"]
+
+let is_match = func(el) { <- matches.contains(el) }
+
+let isValid = func(input) {
+    let stack = []
+    for i = range input.split("") {
+        let top = stack.last()
+        let str = top + i
+        if (is_match(str)) {
+            stack.pop()
+        } else {
+            stack.push(i)
+        }
+    }
+
+    <- stack.length() == 0
+}
+let input = "()[]{}"
+isValid(input)

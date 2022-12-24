@@ -20,6 +20,7 @@ var (
 )
 
 func (p *Parser) parseStmt() ast.Statement {
+	defer p.eatEndToken()
 	p.eatEndToken()
 	switch p.currToken.Type {
 	case token.LET:
@@ -163,6 +164,10 @@ func (p *Parser) parseBlockStmt() *ast.BlockStmt {
 		if stmt := p.parseStmt(); stmt != nil {
 			blockStmt.Statements = append(blockStmt.Statements, stmt)
 		}
+		if p.Errors() != nil {
+			return nil
+		}
+
 		p.eatEndToken()
 	}
 	if !p.advanceCurrTokenIs(token.RBRACE) {
@@ -287,7 +292,8 @@ func (p *Parser) parseForStmt() ast.Statement {
 		forLoopStmt.Statement = p.parseBlockStmt()
 
 	default:
-		return &ast.ErrorStmt{Value: ""}
+		p.addError("error")
+		return nil
 	}
 	return forLoopStmt
 }

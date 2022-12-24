@@ -77,12 +77,6 @@ type (
 		Token    token.Token
 	}
 
-	ErrorStmt struct {
-		Value    string
-		ValuePos token.Pos
-		Token    token.Token
-	}
-
 	ImportStmt struct {
 		Value    string
 		ValuePos token.Pos
@@ -234,7 +228,6 @@ func (s *BooleanLiteral) stmtNode()         {}
 func (s *FloatLiteral) stmtNode()           {}
 func (s *Identifier) stmtNode()             {}
 func (s *ReassignmentStmt) stmtNode()       {}
-func (s *ErrorStmt) stmtNode()              {}
 func (s *InfixExpression) stmtNode()        {}
 func (s *IfStmt) stmtNode()                 {}
 func (s *ImportStmt) stmtNode()             {}
@@ -256,7 +249,6 @@ func (s *BooleanLiteral) exprNode()         {}
 func (s *FloatLiteral) exprNode()           {}
 func (s *Identifier) exprNode()             {}
 func (s *ReassignmentStmt) exprNode()       {}
-func (s *ErrorStmt) exprNode()              {}
 func (s *InfixExpression) exprNode()        {}
 func (s *PrefixExpression) exprNode()       {}
 func (s *ReturnExpression) exprNode()       {}
@@ -283,7 +275,6 @@ func (s *BooleanLiteral) Pos() token.Pos         { return s.ValuePos }
 func (s *FloatLiteral) Pos() token.Pos           { return s.ValuePos }
 func (s *Identifier) Pos() token.Pos             { return s.ValuePos }
 func (s *ReassignmentStmt) Pos() token.Pos       { return s.ValuePos }
-func (s *ErrorStmt) Pos() token.Pos              { return s.ValuePos }
 func (s *InfixExpression) Pos() token.Pos        { return s.ValuePos }
 func (s *IfStmt) Pos() token.Pos                 { return s.ValuePos }
 func (s *ImportStmt) Pos() token.Pos             { return s.ValuePos }
@@ -312,7 +303,6 @@ func (s *BooleanLiteral) Literal() string   { return fmt.Sprint(s.Value) }
 func (s *FloatLiteral) Literal() string     { return fmt.Sprint(s.Value) }
 func (s *Identifier) Literal() string       { return s.Value }
 func (s *ReassignmentStmt) Literal() string { return s.Name.Literal() }
-func (s *ErrorStmt) Literal() string        { return s.Value }
 func (s *InfixExpression) Literal() string {
 	return fmt.Sprintf("(%s %s %s)", s.Left.Literal(), s.Operator, s.Right.Literal())
 }
@@ -347,7 +337,6 @@ func (s *BooleanLiteral) TokenType() token.TokenType         { return s.Token.Ty
 func (s *FloatLiteral) TokenType() token.TokenType           { return s.Token.Type }
 func (s *Identifier) TokenType() token.TokenType             { return s.Token.Type }
 func (s *ReassignmentStmt) TokenType() token.TokenType       { return s.Token.Type }
-func (s *ErrorStmt) TokenType() token.TokenType              { return s.Token.Type }
 func (s *IfStmt) TokenType() token.TokenType                 { return s.Token.Type }
 func (s *ImportStmt) TokenType() token.TokenType             { return s.Token.Type }
 func (s *InfixExpression) TokenType() token.TokenType        { return s.Token.Type }

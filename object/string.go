@@ -1,5 +1,11 @@
 package object
 
+import (
+	"strings"
+
+	"github.com/samber/lo"
+)
+
 func (*String) Type() Type        { return STRING_OBJ }
 func (v *String) Inspect() string { return v.Value }
 func (v *String) Equal(obj Object) bool {
@@ -17,4 +23,30 @@ func (a *String) Native() any { return a.Value }
 
 func (v *String) HashKey() HashKey {
 	return HashKey{Type: v.Type(), Value: v.Value}
+}
+
+func (a *String) GetMethod(name string, eval Evaluator) *Builtin {
+	switch name {
+	case "split":
+		return a.Split()
+
+	}
+	return nil
+}
+
+func (a *String) Split() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) != 1 {
+				return CountArgumentError("1", len(args))
+			}
+			sep, ok := args[0].(*String)
+			if !ok {
+				return methodExpectArgumentError("split", "String", string(args[0].Type()))
+			}
+			strs := strings.Split(a.Value, sep.Value)
+			entries := lo.Map(strs, func(val string, i int) any { return val })
+			return NewArray(entries)
+		},
+	}
 }
