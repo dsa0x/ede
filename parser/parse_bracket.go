@@ -9,6 +9,7 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 	expr := &ast.ArrayLiteral{Token: p.currToken, ValuePos: p.pos}
 
 	if !p.advanceCurrTokenIs(token.LBRACKET) {
+		p.addError(unexpectedTokenError(token.LBRACKET, p.currToken.Literal))
 		return nil
 	}
 
@@ -31,10 +32,12 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	expr := &ast.IndexExpression{Left: left, Token: p.currToken, ValuePos: p.pos}
 
 	if !p.advanceCurrTokenIs(token.LBRACKET) { // eat starting token
+		p.addError(unexpectedTokenError(token.LBRACKET, p.currToken.Literal))
 		return nil
 	}
 	expr.Index = p.parseExpr(LOWEST)
 	if !p.advanceCurrTokenIs(token.RBRACKET) { // eat closing bracket
+		p.addError(unexpectedTokenError(token.RBRACKET, p.currToken.Literal))
 		return nil
 	}
 	return expr

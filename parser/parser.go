@@ -118,7 +118,6 @@ func (p *Parser) Parse() *ast.Program {
 func (p *Parser) parseExpr(precedence int) ast.Expression {
 	prefixFn := p.prefixParseFn(p.currToken.Type)
 	if prefixFn == nil {
-		p.noPrefixParseFnError(p.currToken.Type)
 		return nil
 	}
 	left := prefixFn()
@@ -147,11 +146,8 @@ func (p *Parser) prefixParseFn(tok token.TokenType) func() ast.Expression {
 	if parseFn, ok := p.parseFns[tok]; ok && parseFn.prefix != nil {
 		return parseFn.prefix
 	}
+	p.addError(fmt.Sprintf("no prefix parse function for '%s' found", tok))
 	return nil
-}
-
-func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	p.addError(fmt.Sprintf("no prefix parse function for '%s' found", t))
 }
 
 func (p *Parser) infixParseFn(tok token.TokenType) func(ast.Expression) ast.Expression {

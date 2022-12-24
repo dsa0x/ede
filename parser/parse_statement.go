@@ -54,6 +54,7 @@ func (p *Parser) parseStmt() ast.Statement {
 func (p *Parser) parseLetStmt() *ast.LetStmt {
 	stmt := &ast.LetStmt{Token: p.currToken, ValuePos: p.pos}
 	if !p.advanceNextTokenIs(token.IDENT) { // eat LET token
+		p.addError(unexpectedTokenError(token.IDENT, p.nextToken.Literal))
 		return nil
 	}
 	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
@@ -64,6 +65,7 @@ func (p *Parser) parseLetStmt() *ast.LetStmt {
 	}
 
 	if !p.advanceNextTokenIs(token.ASSIGN) { // advance to =
+		p.addError(unexpectedTokenError(token.ASSIGN, p.nextToken.Literal))
 		return nil
 	}
 
@@ -74,6 +76,7 @@ func (p *Parser) parseLetStmt() *ast.LetStmt {
 func (p *Parser) parseReturnExpr() ast.Expression {
 	stmt := &ast.ReturnExpression{Token: p.currToken, ValuePos: p.pos}
 	if !p.advanceCurrTokenIs(token.RETURN) {
+		p.addError(unexpectedTokenError(token.RETURN, p.nextToken.Literal))
 		return nil
 	}
 
@@ -85,16 +88,18 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 	stmt := &ast.IfStmt{Token: p.currToken, ValuePos: p.pos}
 	stmt.Alternatives = make([]*ast.ConditionalStmt, 0)
 	if !p.advanceNextTokenIs(token.LPAREN) { // eat opening token IF
-		p.addError("unexpected token %s, want %s", p.nextToken.Literal, token.LPAREN)
+		p.addError(unexpectedTokenError(token.LPAREN, p.nextToken.Literal))
 		return nil
 	}
 	p.advanceToken() // eat ( opener of expr
 	stmt.Condition = p.parseExpr(LOWEST)
 
 	if !p.advanceCurrTokenIs(token.RPAREN) {
+		p.addError(unexpectedTokenError(token.RPAREN, p.currToken.Literal))
 		return nil
 	}
 	if !p.advanceCurrTokenIs(token.LBRACE) {
+		p.addError(unexpectedTokenError(token.LBRACE, p.currToken.Literal))
 		return nil
 	}
 
@@ -274,11 +279,8 @@ func (p *Parser) parseForStmt() ast.Statement {
 		}
 
 		expr := p.parseExpr(LOWEST)
-
-		if startingToken.Type == token.LBRACKET { // this means the boundary is a literal
-			if expr == nil {
-				return nil
-			}
+		if expr == nil {
+			return nil
 		}
 
 		forLoopStmt.Boundary = expr
