@@ -76,8 +76,9 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.PLUS_EQUAL] = parseFn{infix: p.parsePlusEqual}
 	p.parseFns[token.MINUS_EQUAL] = parseFn{infix: p.parseMinusEqual}
 	p.parseFns[token.RANGE_ARRAY] = parseFn{infix: p.parseRangeArray}
-	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
-	p.parseFns[token.DOT] = parseFn{infix: p.parseMethodExpression}
+	p.parseFns[token.DOT] = parseFn{infix: p.parseObjectMethodExpression}
+	p.parseFns[token.RETURN] = parseFn{prefix: p.parseReturnExpr}
+	p.parseFns[token.MATCH] = parseFn{prefix: p.parseMatchExpression}
 	p.registerIllegalFns()
 }
 
@@ -127,14 +128,20 @@ func (p *Parser) parseExpr(precedence int) ast.Expression {
 	left := prefixFn()
 
 	for !p.currTokenIs(token.SEMICOLON) && precedence < p.currPrecedence() {
-		if infixFn := p.infixParseFn(p.currToken.Type); infixFn != nil {
+		infixFn := p.infixParseFn(p.currToken.Type)
+		if infixFn != nil {
 			left = infixFn(left)
 			continue
 		}
-		if postfixFn := p.postfixParseFn(p.currToken.Type); postfixFn != nil {
+		postfixFn := p.postfixParseFn(p.currToken.Type)
+		if postfixFn != nil {
 			left = postfixFn(left)
 			continue
 		}
+		// if it get here, no infix or posfix function was found
+		// we need to return to prevent infinite loop
+		p.addError("no infix or postfix parse function for token '%s'", p.currToken.Literal)
+		return nil
 	}
 
 	return left

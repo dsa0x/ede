@@ -10,7 +10,19 @@ func (v *Int) Equal(obj Object) bool {
 	if objInt, ok := obj.(*Int); ok {
 		return objInt.Value == v.Value
 	}
+	// 1.0 = 1
+	if objInt, ok := obj.(*Float); ok {
+		return objInt.Value == float64(v.Value)
+	}
 	return false
+}
+
+func NewInt(val int64) *Int {
+	return &Int{Value: val}
+}
+
+func (a *Int) Native() any {
+	return a.Value
 }
 
 func (a *Int) GetMethod(name string, eval Evaluator) *Builtin {
@@ -19,7 +31,7 @@ func (a *Int) GetMethod(name string, eval Evaluator) *Builtin {
 		return &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) > 0 {
-					return countArgumentError("0", len(args))
+					return CountArgumentError("0", len(args))
 				}
 
 				return &Float{Value: float64(a.Value)}
@@ -29,7 +41,7 @@ func (a *Int) GetMethod(name string, eval Evaluator) *Builtin {
 		return &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) > 0 {
-					return countArgumentError("0", len(args))
+					return CountArgumentError("0", len(args))
 				}
 
 				return &String{Value: fmt.Sprint(a.Value)}

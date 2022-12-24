@@ -28,6 +28,19 @@ func (p *Parser) advanceCurrTokenIs(tok token.TokenType) bool {
 	return found
 }
 
+// advanceCurrTokens advances the current token if they match those orders
+func (p *Parser) advanceCurrTokens(toks ...token.TokenType) bool {
+	for _, tok := range toks {
+		if p.currTokenIs(tok) {
+			p.advanceToken()
+		} else {
+			return false
+		}
+	}
+	p.eatEndToken()
+	return true
+}
+
 // advanceNextTokenIs advances to the next token if it matches, else it does nothing
 func (p *Parser) advanceNextTokenIs(tok token.TokenType) bool {
 	found := p.nextTokenIs(tok)

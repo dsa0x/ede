@@ -703,3 +703,70 @@ func TestParsingHashLiteralsWithExpressions(t *testing.T) {
 		testFunc(value)
 	}
 }
+
+func TestParsingImportStatement(t *testing.T) {
+	input := `import json`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ImportStmt)
+	if !ok {
+		t.Fatalf("exp is not ast.ImportStmt. got=%T", stmt)
+	}
+	if stmt.Value != "json" {
+		t.Fatalf("expected to have imported 'json' module")
+	}
+}
+
+func TestParsingImportJson(t *testing.T) {
+	input := `
+	import json
+	let obj = json.parse("{'subjects':1}")
+	obj
+	`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ImportStmt)
+	if !ok {
+		t.Fatalf("exp is not ast.ImportStmt. got=%T", stmt)
+	}
+	if stmt.Value != "json" {
+		t.Fatalf("expected to have imported 'json' module")
+	}
+}
+
+func TestParsingMatchExpressions(t *testing.T) {
+	input := `
+	let obj = match ((10*10).type()) {
+	case ERROR: <- println(ERROR)
+	default: println(obj)
+	}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.Parse()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.LetStmt)
+	if !ok {
+		t.Fatalf("exp is not ast.LetStmt. got=%T", stmt)
+	}
+	match, ok := stmt.Expr.(*ast.MatchExpression)
+	if !ok {
+		t.Fatalf("exp is not ast.MatchExpression. got=%T", stmt.Expr)
+	}
+
+	if len(match.Cases) != 1 {
+		t.Fatalf("match.Cases has wrong length. got=%d", len(match.Cases))
+	}
+	if match.Default == nil {
+		t.Fatalf("expected default branch. got nil")
+	}
+}

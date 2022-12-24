@@ -31,7 +31,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.FloatLiteral:
 		return &object.Float{Value: node.Value}
 	case *ast.BooleanLiteral:
-		return &object.Boolean{Value: node.Value}
+		return object.NewBoolean(node.Value)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.IfStmt:
@@ -57,17 +57,18 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.Program:
 		return evalProgram(node, env)
 	case *ast.LetStmt:
-		ident := e.Eval(node.Expr, env)
-		if !isError(ident) {
-			env.Set(node.Name.Value, ident)
+		if expr, ok := node.Expr.(*ast.MatchExpression); ok {
+			return e.evalMatchExpression(&node.Name.Value, expr, env)
 		}
-		return ident
+		return e.evalLetExpression(node.Name.Value, node.Expr, env)
 	case *ast.BlockStmt:
 		return e.evalBlockStmt(node, env)
 	case *ast.ExpressionStmt:
 		return e.Eval(node.Expr, env)
 	case *ast.ConditionalStmt:
 		return e.Eval(node.Statement, env)
+	case *ast.ImportStmt:
+		return e.evalImportStmt(node, env)
 	case *ast.FunctionLiteral:
 		return &object.Function{Body: node.Body, Params: node.Params, ParentEnv: env}
 	case *ast.CallExpression:
@@ -106,7 +107,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.ForLoopStmt:
 		return e.evalForLoopStmt(node, env)
 	case *ast.ObjectMethodExpression:
-		return e.evalObjectMethodExpr(node, env)
+		return e.evalObjectDotExpr(node, env)
 	}
 
 	return nil
@@ -204,6 +205,18 @@ func (e *Evaluator) evalBlockStmt(node *ast.BlockStmt, env *object.Environment) 
 	return result
 }
 
+func (e *Evaluator) evalImportStmt(node *ast.ImportStmt, env *object.Environment) object.Object {
+	if node == nil {
+		return object.NewErrorWithMsg("invalid import") //TODO improve error message
+	}
+
+	if mod, ok := modules[node.Value]; ok {
+		env.Set(node.Value, object.NewImport(mod))
+		return NULL
+	}
+	return object.NewErrorWithMsg("invalid import") //TODO improve error message
+}
+
 func (e *Evaluator) evalIfExpression(node *ast.IfStmt, env *object.Environment) object.Object {
 	cond := e.Eval(node.Consequence.Condition, env)
 	if isTruthy(cond) {
@@ -222,28 +235,83 @@ func (e *Evaluator) evalIfExpression(node *ast.IfStmt, env *object.Environment) 
 	return NULL
 }
 
-func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.Environment) object.Object {
-	switch left := node.Left.(type) {
-	case *ast.Identifier:
-		ident := e.Eval(left, env)
-		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
-			if arr, ok := ident.(*object.Array); ok {
-				if int(index.Value) >= len(*arr.Entries) {
-					return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*arr.Entries)), node.Pos())
-				}
-				return (*arr.Entries)[index.Value]
-			}
-		}
+func (e *Evaluator) evalLetExpression(nodeName string, RHS ast.Expression, env *object.Environment) object.Object {
+	expr := e.Eval(RHS, env)
+	if !isError(expr) {
+		env.Set(nodeName, expr)
+	}
+	return expr
+}
 
-	case *ast.ArrayLiteral:
-		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
-			if int(index.Value) >= len(left.Elements) {
-				return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(left.Elements)), node.Pos())
-			}
-			return e.Eval(left.Elements[index.Value], env)
+func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpression, env *object.Environment) object.Object {
+	// evaluate the match expression i.e match(expr_here)
+	expr := e.Eval(node.Expression, env)
+	if expr == nil {
+		return object.NewErrorWithMsg("match expression cannot be null")
+	}
+
+	// if the match is called from a let statement, set its expression to the identifier
+	if exprIdent != nil {
+		env.Set(*exprIdent, expr)
+	}
+
+	// create an environment for the match block, and
+	// set the error value for the block
+	matchEnv := object.NewEnvironment(env)
+	if isError(expr) {
+		matchEnv.Set(token.ErrorIdentifier, expr)
+	}
+
+	for _, matchCase := range node.Cases {
+		// evaluate each case
+		pattern := e.Eval(matchCase.Pattern, matchEnv)
+
+		// if the case matches the match expression, return the case output
+		if pattern != nil && pattern.Equal(expr) {
+			val := e.Eval(matchCase.Output, matchEnv)
+			matchEnv.Set(token.ErrorIdentifier, object.NewString(fmt.Sprintf("ERROR: %s", expr.Inspect())))
+			return val
+		}
+		// it is important to check this after the equality check, so we
+		// can differentiate other runtime errors from the one we're checking
+		if isError(pattern) {
+			return pattern
 		}
 	}
-	return e.EvalError(fmt.Sprintf("invalid index operator %s for %s", node.Index.Literal(), node.Left), node.Pos())
+
+	// if no case matches and there is a default block
+	if node.Default != nil {
+		return e.Eval(node.Default, env)
+	}
+
+	// if no case matches, set the expr to the let stmt
+	env.Set(*exprIdent, expr)
+	return NULL
+}
+
+func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.Environment) object.Object {
+	left := e.Eval(node.Left, env)
+	if isError(left) {
+		return left
+	}
+
+	switch left.Type() {
+	case object.ARRAY_OBJ:
+		left := left.(*object.Array)
+		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
+			if int(index.Value) >= len(*left.Entries) {
+				return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*left.Entries)), node.Pos())
+			}
+			return (*left.Entries)[index.Value]
+		}
+	case object.HASH_OBJ:
+		left := left.(*object.Hash)
+		index := node.Index.(*ast.StringLiteral)
+		if entry, ok := left.Entries[index.Value]; ok {
+			return entry
+		}
+	}
+	return e.EvalError(fmt.Sprintf("invalid index entry '%s' for '%s'", node.Index.Literal(), node.Left.Literal()), node.Pos())
 }
 
 func (e *Evaluator) evalPostfixExpression(operator string, left object.Object) object.Object {
@@ -339,6 +407,7 @@ func isTruthy(obj object.Object) bool {
 	return true
 }
 
+// isError returns true if the object is an error. If the object is nil, error is false
 func isError(obj object.Object) bool {
 	if obj != nil {
 		errObj, ok := obj.(*object.Error)

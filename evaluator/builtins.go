@@ -3,6 +3,7 @@ package evaluator
 import (
 	"ede/object"
 	"fmt"
+	"strings"
 )
 
 var builtins = map[string]*object.Builtin{
@@ -12,6 +13,13 @@ var builtins = map[string]*object.Builtin{
 		applyBuiltinPrint(args...)
 		fmt.Println()
 		return NULL
+	}},
+	"printf": {Fn: func(args ...object.Object) object.Object {
+		print := make([]string, len(args))
+		for i, arg := range args {
+			print[i] = arg.Inspect()
+		}
+		return object.NewString(strings.Join(print, ", "))
 	}},
 }
 

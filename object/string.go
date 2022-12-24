@@ -8,6 +8,13 @@ func (v *String) Equal(obj Object) bool {
 	}
 	return false
 }
+
+func NewString(val string) *String {
+	return &String{Value: val}
+}
+
+func (a *String) Native() any { return a.Value }
+
 func (v *String) HashKey() HashKey {
 	return HashKey{Type: v.Type(), Value: v.Value}
 }

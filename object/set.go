@@ -20,6 +20,14 @@ func (v *Set) Inspect() string {
 	return buf.String()
 }
 
+func (a *Set) Native() any {
+	set := make(map[string]struct{})
+	// for key, el := range a.Entries {
+	// 	set[]
+	// }
+	return set
+}
+
 func (v *Set) Equal(obj Object) bool {
 	if obj, ok := obj.(*Set); ok {
 		if len(obj.Entries) != len(v.Entries) {
@@ -60,7 +68,7 @@ func (a *Set) Add() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) < 1 {
-				return countArgumentError(">0", len(args))
+				return CountArgumentError(">0", len(args))
 			}
 			for _, arg := range args {
 				key := ToHashKey(arg)
@@ -78,7 +86,7 @@ func (a *Set) Delete() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) < 1 {
-				return countArgumentError(">0", len(args))
+				return CountArgumentError(">0", len(args))
 			}
 			keys := []HashKey{}
 			for _, arg := range args {
@@ -100,7 +108,7 @@ func (a *Set) Contains() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
-				return countArgumentError("1", len(args))
+				return CountArgumentError("1", len(args))
 			}
 
 			key, ok := args[0].(Hashable)
@@ -119,7 +127,7 @@ func (a *Set) Items() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) > 0 {
-				return countArgumentError("0", len(args))
+				return CountArgumentError("0", len(args))
 			}
 			entries := make([]Object, 0)
 			for el := range a.Entries {
@@ -134,7 +142,7 @@ func (a *Set) Clear() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) > 0 {
-				return countArgumentError("0", len(args))
+				return CountArgumentError("0", len(args))
 			}
 			for key := range a.Entries {
 				delete(a.Entries, key)

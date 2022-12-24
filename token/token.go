@@ -17,11 +17,12 @@ const (
 	EOF     = "EOF"
 
 	// Identifiers and literals
-	IDENT   = "IDENT"   // let, if, for, etc
-	BUILTIN = "BUILTIN" // print, len, etc
-	INT     = "INT"     // 1, 2, 3
-	FLOAT   = "FLOAT"   // 1.6
-	STRING  = "STRING"
+	IDENT    = "IDENT"   // let, if, for, etc
+	BUILTIN  = "BUILTIN" // print, len, etc
+	INT      = "INT"     // 1, 2, 3
+	FLOAT    = "FLOAT"   // 1.6
+	STRING   = "STRING"
+	BACKTICK = "BACKTICK" // template literal `
 
 	// Operators
 	PLUS        = "+"
@@ -70,15 +71,23 @@ const (
 	IF          = "IF"
 	ELSE        = "ELSE"
 	RETURN      = "RETURN"
+	IMPORT      = "IMPORT"
+	MATCH       = "MATCH"
+	CASE        = "CASE"
+	DEFAULT     = "DEFAULT"
 	TRUE        = "TRUE"
 	FALSE       = "FALSE"
 	FOR         = "FOR"
 	RANGE       = "RANGE"
 )
 
-// IndexIdentifier is the identifier that is automatically binded
-// to the index in a loop variable
-var IndexIdentifier = "index"
+var (
+	// IndexIdentifier is the identifier that is automatically binded
+	// to the index in a loop variable
+	IndexIdentifier = "index"
+
+	ErrorIdentifier = "ERROR"
+)
 
 var keywords = map[string]TokenType{
 	"func":          FUNCTION,
@@ -90,7 +99,16 @@ var keywords = map[string]TokenType{
 	"false":         FALSE,
 	"for":           FOR,
 	"range":         RANGE,
+	"return":        RETURN,
+	"import":        IMPORT,
+	"match":         MATCH,
+	"case":          CASE,
+	"default":       DEFAULT,
+	"object":        IDENT,
 	IndexIdentifier: IDENT,
+
+	// inbuilt types
+	ErrorIdentifier: IDENT,
 }
 
 // LookupIdent looks up the identifier. if it is in the map of reserved keywords,

@@ -15,3 +15,11 @@ func (v *Boolean) Equal(obj Object) bool {
 func (v *Boolean) HashKey() HashKey {
 	return HashKey{Type: v.Type(), Value: fmt.Sprint(v.Value)}
 }
+
+func NewBoolean(val bool) *Boolean {
+	return &Boolean{Value: val}
+}
+
+func (a *Boolean) Native() any {
+	return a.Value
+}

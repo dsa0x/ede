@@ -37,15 +37,21 @@ func (p *Parser) parseSetExpression(startPos token.Pos) ast.Expression {
 	return expr
 }
 
-func (p *Parser) parseMethodExpression(obj ast.Expression) ast.Expression {
+func (p *Parser) parseObjectMethodExpression(obj ast.Expression) ast.Expression {
 	expr := &ast.ObjectMethodExpression{Token: p.currToken, Object: obj, ValuePos: p.pos}
 	p.advanceToken()
 	if !p.currTokenIs(token.IDENT) {
+		p.addError(unexpectedTokenError(token.IDENT, p.currToken.Literal))
 		return nil
 	}
 
-	// subtract 1, so that we can parse the closing parenthesis, and we stop there.
-	expr.Method = p.parseExpr(CALL - 1)
+	// if it is a method call
+	if p.nextTokenIs(token.LPAREN) {
+		// subtract 1, so that we can parse the closing parenthesis, and we stop there.
+		expr.Method = p.parseExpr(CALL - 1)
+	} else {
+		expr.Method = p.parseIdent()
+	}
 	return expr
 }
 

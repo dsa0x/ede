@@ -1,6 +1,7 @@
+import json
+
 let name = "foo";
 let age = 10.5;
-let subjects = ["english", "french"];
 
 for i = range [1..10] {
     if (i == 4) {
@@ -8,7 +9,11 @@ for i = range [1..10] {
     }
     age++;
 };
-
-let best_subject = subjects[1]
 println("name is", name, "and age is", age);
+
+let obj = match (json.parse(`{"subjects":["english", "french"]}`)) {
+    case ERROR: <- printf("subjects is not json", ERROR)
+}
+
+let best_subject = obj.subjects[1]
 println("best subject is ", best_subject)

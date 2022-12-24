@@ -20,18 +20,42 @@ var (
 	ARRAY_OBJ        Type = "ARRAY"
 	HASH_OBJ         Type = "HASH"
 	SET_OBJ          Type = "SET"
+	IMPORT_OBJ       Type = "IMPORT"
 
 	NULL  = &Null{}
-	TRUE  = &Boolean{Value: true}
-	FALSE = &Boolean{Value: false}
+	TRUE  = NewBoolean(true)
+	FALSE = NewBoolean(false)
 
 	EmptyHashKey = HashKey{}
 )
 
 type Object interface {
 	Type() Type
+	Native() any
 	Inspect() string
 	Equal(obj Object) bool
+}
+
+func New(val any) Object {
+	switch val := val.(type) {
+	case bool:
+		return NewBoolean(val)
+	case string:
+		return NewString(val)
+	case float64:
+		return NewFloat(val)
+	case float32:
+		return NewFloat(float64(val))
+	case int64:
+		return NewInt(val)
+	case int:
+		return NewInt(int64(val))
+	case []any:
+		return NewArray(val)
+	case map[string]any:
+		return NewHash(val)
+	}
+	return &Error{Message: "unsupported value"}
 }
 
 type HashKey struct {
@@ -105,7 +129,7 @@ func FromHashKey(key HashKey) Object {
 		return &Int{Value: intVal}
 	case BOOLEAN_OBJ:
 		boolVal, _ := strconv.ParseBool(key.Value)
-		return &Boolean{Value: boolVal}
+		return NewBoolean(boolVal)
 	}
 	return nil
 }

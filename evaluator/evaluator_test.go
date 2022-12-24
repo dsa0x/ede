@@ -372,8 +372,8 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("")`, 0},
 		{`len("four")`, 4},
 		{`len("hello world")`, 11},
-		{`len(1)`, "argument to `len` not supported, got INT"},
-		{`len("one", "two")`, "builtin function 'len' requires exactly one argument, got 2"},
+		{`len(1)`, "ERROR: argument to `len` not supported, got INT"},
+		{`len("one", "two")`, "ERROR: builtin function 'len' requires exactly one argument, got 2"},
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
 		{`println("hello", "world!")`, nil},
@@ -1056,6 +1056,40 @@ func TestEval(t *testing.T) {
 	}
 }
 
+func TestEval_Match(t *testing.T) {
+	t.Run("errored", func(t *testing.T) {
+		input := `
+	println("starting")
+	let obj = match (10*"a") {
+	case obj.type() == ERROR: <- ERROR
+	default: println(obj)
+	}
+	println("should not get here")
+	`
+
+		evaluated := testEval(input)
+		if evaluated, ok := evaluated.(*object.Error); !ok {
+			t.Fatalf("expected an error to be returned, got %T", evaluated)
+		}
+	})
+
+	t.Run("no error", func(t *testing.T) {
+		input := `
+	println("starting")
+	let obj = match (10*10) {
+	case obj.type() == ERROR: <- println(ERROR)
+	default: println(obj)
+	}
+	println("should get here")
+	`
+
+		evaluated := testEval(input)
+		if evaluated, ok := evaluated.(*object.Null); !ok {
+			t.Fatalf("expected *object.Null to be returned, got %T", evaluated)
+		}
+	})
+}
+
 func TestEval_TwoSum(t *testing.T) {
 	input := `
 	let two_sum = func(nums, target) {
@@ -1085,4 +1119,89 @@ func TestEval_TwoSum(t *testing.T) {
 	if !testObject(t, evaluated, exp) {
 		t.Fatalf("expected %v, got %v", exp, evaluated.Inspect())
 	}
+}
+
+func TestEval_Module(t *testing.T) {
+	t.Run("json.parse", func(t *testing.T) {
+		input := "import json;" +
+			"let obj = json.parse(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`);" +
+			"obj;"
+
+		evaluated := testEval(input)
+		ev, ok := evaluated.(*object.Hash)
+		if !ok {
+			t.Fatalf("expected an hash to be returned, got %T", ev)
+		}
+		if len(ev.Entries) != 2 {
+			t.Fatalf("expected hash of length 2 , got %v", len(ev.Entries))
+		}
+	})
+
+	t.Run("json.string", func(t *testing.T) {
+		input := "import json;" +
+			"let hash = {\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}};" +
+			"let obj = json.string(hash);" +
+			"let reparsed = json.parse(obj);" +
+			"println(hash);" +
+			"println(reparsed);" +
+			"reparsed == hash;"
+
+		evaluated := testEval(input)
+		ev, ok := evaluated.(*object.Boolean)
+		if !ok {
+			t.Fatalf("expected a boolean to be returned, got %T", ev)
+		}
+		if !ev.Value {
+			t.Fatalf("expected reparsed object to be same as original object")
+		}
+	})
+}
+
+func TestEval_Method_Error(t *testing.T) {
+	t.Run("identifier not found", func(t *testing.T) {
+		input := "let obj = json.parse(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`);" +
+			"obj;"
+
+		evaluated := testEval(input)
+		ev, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Fatalf("expected an error to be returned, got %T", ev)
+		}
+		exp := "identifier not found 'json'"
+		if !strings.Contains(ev.Message, exp) {
+			t.Fatalf("Error message '%s' does not contain '%s'", ev.Message, exp)
+		}
+	})
+
+	t.Run("method not found", func(t *testing.T) {
+		input := "import json \n" +
+			"let obj = json.stringify(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`);" +
+			"obj;"
+
+		evaluated := testEval(input)
+		ev, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Fatalf("expected an error to be returned, got %T", ev)
+		}
+		exp := "unknown method 'stringify' for module 'json'"
+		if !strings.Contains(ev.Message, exp) {
+			t.Fatalf("Error message '%s' does not contain '%s'", ev.Message, exp)
+		}
+	})
+
+	t.Run("attr not found", func(t *testing.T) {
+		input :=
+			"let obj ={\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}};" +
+				"obj[\"foo\"];"
+
+		evaluated := testEval(input)
+		ev, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Fatalf("expected an error to be returned, got %T", ev)
+		}
+		exp := "invalid index entry 'foo' for 'obj'"
+		if !strings.Contains(ev.Message, exp) {
+			t.Fatalf("Error message '%s' does not contain '%s'", ev.Message, exp)
+		}
+	})
 }

@@ -1,0 +1,27 @@
+let name = "foo";
+let age = 10.5;
+let subjects = ["english", "french"];
+
+for i = range [1..10] {
+    if (i == 4) {
+        age = age + i
+    }
+    age++;
+};
+
+let best_subject = subjects[1]
+println("name is", name, "and age is", age);
+println("best subject is ", best_subject)
+
+let obj = json.parse({"subjects":subjects}) // may return error or obj
+// if the obj is an error, it is propagated to the next call until handled
+
+let obj = json.parse(`{'subjects':["english"]}`) match(obj) {
+    case obj.fault(): <- println("subjects is not json") // should terminate the control here if there is an error
+    case obj.ok(): obj.result()
+}
+
+let obj = json.parse({"subjects":subjects})
+if obj.fault() {
+    <- error
+}

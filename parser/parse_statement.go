@@ -31,7 +31,10 @@ func (p *Parser) parseStmt() ast.Statement {
 	case token.IF:
 		return p.parseIfStmt()
 	case token.RETURN:
-		return p.parseReturnExpr()
+		expr := p.parseReturnExpr()
+		if expr, ok := expr.(*ast.ReturnExpression); ok {
+			return expr
+		}
 	case token.FOR:
 		return p.parseForStmt()
 	case token.NEWLINE, token.SEMICOLON:
@@ -41,6 +44,8 @@ func (p *Parser) parseStmt() ast.Statement {
 		stmt := &ast.CommentStmt{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
 		p.advanceToken()
 		return stmt
+	case token.IMPORT:
+		return p.parseImportStmt()
 	}
 	return p.parseExpressionStmt()
 }
@@ -65,7 +70,7 @@ func (p *Parser) parseLetStmt() *ast.LetStmt {
 	stmt.Expr = p.parseExpr(LOWEST)
 	return stmt
 }
-func (p *Parser) parseReturnExpr() *ast.ReturnExpression {
+func (p *Parser) parseReturnExpr() ast.Expression {
 	stmt := &ast.ReturnExpression{Token: p.currToken, ValuePos: p.pos}
 	if !p.advanceCurrTokenIs(token.RETURN) {
 		return nil
@@ -167,6 +172,71 @@ func (p *Parser) parseBlockStmt() *ast.BlockStmt {
 
 	p.eatEndToken()
 	return blockStmt
+}
+
+func (p *Parser) parseImportStmt() *ast.ImportStmt {
+	stmt := &ast.ImportStmt{ValuePos: p.pos, Token: p.currToken}
+	p.advanceToken()
+	if !p.currTokenIs(token.IDENT) {
+		p.addError("invalid import statement")
+		return nil
+	}
+	stmt.Value = p.currToken.Literal
+	p.advanceToken()
+	return stmt
+}
+
+func (p *Parser) parseMatchExpression() ast.Expression {
+	stmt := &ast.MatchExpression{ValuePos: p.pos, Token: p.currToken, Cases: make([]ast.MatchCase, 0)}
+	if !p.advanceCurrTokens(token.MATCH, token.LPAREN) {
+		p.addError(unexpectedTokenError(token.LPAREN, string(p.currToken.Type))) // TODO: may be incorrect
+		return nil
+	}
+
+	stmt.Expression = p.parseExpr(LOWEST)
+
+	if !p.advanceCurrTokens(token.RPAREN, token.LBRACE) {
+		p.addError(unexpectedTokenError(token.RBRACE, p.currToken.Literal))
+		return nil
+	}
+
+	// function to parse each case of the match block
+	parseMatchCase := func() ast.Expression {
+		if !p.advanceCurrTokenIs(token.COLON) {
+			p.addError(unexpectedTokenError(token.COLON, string(p.currToken.Type)))
+			return nil
+		}
+		expr := p.parseExpr(LOWEST)
+		p.eatEndToken()
+		return expr
+	}
+
+outerloop:
+	for {
+		switch p.currToken.Type {
+		case token.RBRACE: // single case
+			p.advanceToken()
+			return stmt
+		case token.CASE:
+			p.advanceToken()
+			pattern := p.parseExpr(LOWEST)
+			matchCase := ast.MatchCase{Pattern: pattern, Output: parseMatchCase()}
+			stmt.Cases = append(stmt.Cases, matchCase)
+			if matchCase.Pattern == nil || matchCase.Output == nil {
+				return nil
+			}
+		case token.DEFAULT:
+			p.advanceToken()
+			if stmt.Default = parseMatchCase(); stmt.Default == nil {
+				return nil
+			}
+		default:
+			break outerloop
+		}
+	}
+
+	p.advanceToken()
+	return stmt
 }
 
 func (p *Parser) parseForStmt() ast.Statement {

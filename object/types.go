@@ -26,9 +26,13 @@ type BuiltinFn func(args ...Object) Object
 type Builtin struct{ Fn BuiltinFn }
 
 func NewErrorWithMsg(msg string, format ...any) *Error {
-	return &Error{Message: fmt.Sprintf(msg, format...)}
+	return &Error{Message: "ERROR: " + fmt.Sprintf(msg, format...)}
 }
 
 func NewError(msg error) *Error {
 	return NewErrorWithMsg(msg.Error())
+}
+
+func (a *Null) Native() any {
+	return nil
 }

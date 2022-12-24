@@ -83,6 +83,24 @@ type (
 		Token    token.Token
 	}
 
+	ImportStmt struct {
+		Value    string
+		ValuePos token.Pos
+		Token    token.Token
+	}
+
+	MatchCase struct {
+		Pattern Expression
+		Output  Expression
+	}
+	MatchExpression struct {
+		Expression Expression
+		Cases      []MatchCase
+		Default    Expression
+		ValuePos   token.Pos
+		Token      token.Token
+	}
+
 	Identifier struct {
 		Token    token.Token
 		Value    string
@@ -219,12 +237,14 @@ func (s *ReassignmentStmt) stmtNode()       {}
 func (s *ErrorStmt) stmtNode()              {}
 func (s *InfixExpression) stmtNode()        {}
 func (s *IfStmt) stmtNode()                 {}
+func (s *ImportStmt) stmtNode()             {}
 func (s *PrefixExpression) stmtNode()       {}
 func (s *ReturnExpression) stmtNode()       {}
 func (s *PostfixExpression) stmtNode()      {}
 func (s *CallExpression) stmtNode()         {}
 func (s *IndexExpression) stmtNode()        {}
 func (s *ObjectMethodExpression) stmtNode() {}
+func (s *MatchExpression) stmtNode()        {}
 
 func (s *StringLiteral) exprNode()          {}
 func (s *FunctionLiteral) exprNode()        {}
@@ -244,6 +264,7 @@ func (s *PostfixExpression) exprNode()      {}
 func (s *CallExpression) exprNode()         {}
 func (s *IndexExpression) exprNode()        {}
 func (s *ObjectMethodExpression) exprNode() {}
+func (s *MatchExpression) exprNode()        {}
 
 func (s *Program) Pos() token.Pos                { return s.ValuePos }
 func (s *LetStmt) Pos() token.Pos                { return s.ValuePos }
@@ -265,12 +286,14 @@ func (s *ReassignmentStmt) Pos() token.Pos       { return s.ValuePos }
 func (s *ErrorStmt) Pos() token.Pos              { return s.ValuePos }
 func (s *InfixExpression) Pos() token.Pos        { return s.ValuePos }
 func (s *IfStmt) Pos() token.Pos                 { return s.ValuePos }
+func (s *ImportStmt) Pos() token.Pos             { return s.ValuePos }
 func (s *PrefixExpression) Pos() token.Pos       { return s.ValuePos }
 func (s *ReturnExpression) Pos() token.Pos       { return s.ValuePos }
 func (s *PostfixExpression) Pos() token.Pos      { return s.ValuePos }
 func (s *CallExpression) Pos() token.Pos         { return s.ValuePos }
 func (s *IndexExpression) Pos() token.Pos        { return s.ValuePos }
 func (s *ObjectMethodExpression) Pos() token.Pos { return s.ValuePos }
+func (s *MatchExpression) Pos() token.Pos        { return s.ValuePos }
 
 func (s *Program) Literal() string          { return "" } // TODO
 func (s *LetStmt) Literal() string          { return s.Token.Literal }
@@ -293,7 +316,8 @@ func (s *ErrorStmt) Literal() string        { return s.Value }
 func (s *InfixExpression) Literal() string {
 	return fmt.Sprintf("(%s %s %s)", s.Left.Literal(), s.Operator, s.Right.Literal())
 }
-func (s *IfStmt) Literal() string { return s.Token.Literal }
+func (s *IfStmt) Literal() string     { return s.Token.Literal }
+func (s *ImportStmt) Literal() string { return s.Token.Literal }
 func (s *PrefixExpression) Literal() string {
 	return fmt.Sprintf("%s%s", s.Token.Literal, s.Right.Literal())
 }
@@ -304,6 +328,7 @@ func (s *PostfixExpression) Literal() string      { return s.Token.Literal }
 func (s *CallExpression) Literal() string         { return s.Token.Literal }
 func (s *IndexExpression) Literal() string        { return s.Token.Literal }
 func (s *ObjectMethodExpression) Literal() string { return s.Token.Literal }
+func (s *MatchExpression) Literal() string        { return s.Token.Literal }
 
 func (s *Program) TokenType() token.TokenType                { return s.Token.Type }
 func (s *LetStmt) TokenType() token.TokenType                { return s.Token.Type }
@@ -324,6 +349,7 @@ func (s *Identifier) TokenType() token.TokenType             { return s.Token.Ty
 func (s *ReassignmentStmt) TokenType() token.TokenType       { return s.Token.Type }
 func (s *ErrorStmt) TokenType() token.TokenType              { return s.Token.Type }
 func (s *IfStmt) TokenType() token.TokenType                 { return s.Token.Type }
+func (s *ImportStmt) TokenType() token.TokenType             { return s.Token.Type }
 func (s *InfixExpression) TokenType() token.TokenType        { return s.Token.Type }
 func (s *PrefixExpression) TokenType() token.TokenType       { return s.Token.Type }
 func (s *ReturnExpression) TokenType() token.TokenType       { return s.Token.Type }
@@ -331,3 +357,4 @@ func (s *PostfixExpression) TokenType() token.TokenType      { return s.Token.Ty
 func (s *CallExpression) TokenType() token.TokenType         { return s.Token.Type }
 func (s *IndexExpression) TokenType() token.TokenType        { return s.Token.Type }
 func (s *ObjectMethodExpression) TokenType() token.TokenType { return s.Token.Type }
+func (s *MatchExpression) TokenType() token.TokenType        { return s.Token.Type }

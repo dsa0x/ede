@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/samber/lo"
+	"golang.org/x/exp/slices"
 )
 
 type Array struct{ Entries *[]Object }
@@ -37,6 +38,19 @@ func (v *Array) Equal(obj Object) bool {
 		return true
 	}
 	return false
+}
+
+func NewArray(arr []any) *Array {
+	entries := lo.Map(arr, func(val any, i int) Object { return New(val) })
+	return &Array{Entries: &entries}
+}
+
+func (a *Array) Native() any {
+	arr := make([]any, len(*a.Entries))
+	for i, el := range *a.Entries {
+		arr[i] = el.Native()
+	}
+	return arr
 }
 
 func (a *Array) GetMethod(name string, eval Evaluator) *Builtin {
@@ -141,12 +155,12 @@ func (a *Array) Contains(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
-				return countArgumentError("1", len(args))
+				return CountArgumentError("1", len(args))
 			}
 			_, found := lo.Find(*a.Entries, func(entry Object) bool {
 				return entry.Equal(args[0])
 			})
-			return &Boolean{Value: found}
+			return NewBoolean(found)
 		},
 	}
 }
@@ -155,7 +169,7 @@ func (a *Array) Join(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
-				return countArgumentError("1", len(args))
+				return CountArgumentError("1", len(args))
 			}
 			strArg, ok := args[0].(*String)
 			if !ok {
@@ -178,7 +192,7 @@ func (a *Array) Find(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
-				return countArgumentError("1", len(args))
+				return CountArgumentError("1", len(args))
 			}
 			fn, ok := args[0].(*Function)
 			if !ok {
@@ -209,7 +223,7 @@ func (a *Array) Map(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
-				return countArgumentError("1", len(args))
+				return CountArgumentError("1", len(args))
 			}
 			fn, ok := args[0].(*Function)
 			if !ok {
@@ -237,7 +251,7 @@ func (a *Array) Filter(evaluator Evaluator) *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
-				return countArgumentError("1", len(args))
+				return CountArgumentError("1", len(args))
 			}
 			fn, ok := args[0].(*Function)
 			if !ok {
@@ -269,7 +283,7 @@ func (a *Array) Merge() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) < 1 {
-				return countArgumentError(">1", len(args))
+				return CountArgumentError(">1", len(args))
 			}
 
 			for _, arg := range args {
@@ -288,7 +302,7 @@ func (a *Array) Clear() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) > 0 {
-				return countArgumentError("0", len(args))
+				return CountArgumentError("0", len(args))
 			}
 			*a.Entries = (*a.Entries)[:0]
 			return a
@@ -300,7 +314,7 @@ func (a *Array) Set() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) > 0 {
-				return countArgumentError("0", len(args))
+				return CountArgumentError("0", len(args))
 			}
 			set := make(map[HashKey]struct{})
 			for _, arg := range *a.Entries {
@@ -315,7 +329,21 @@ func (a *Array) Set() *Builtin {
 	}
 }
 
-func countArgumentError(exp string, got int) *Error {
+func (a *Array) Sort() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) > 0 {
+				return CountArgumentError("0", len(args))
+			}
+			slices.SortFunc(*a.Entries, func(a Object, b Object) bool {
+				return false
+			})
+			return a
+		},
+	}
+}
+
+func CountArgumentError(exp string, got int) *Error {
 	return NewError(fmt.Errorf("expected %s argument(s), got %d", exp, got))
 }
 

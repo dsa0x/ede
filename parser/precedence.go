@@ -34,7 +34,7 @@ func (p *Parser) precedence(tokenType token.TokenType) int {
 		return LESSGREATER
 	case token.PLUS, token.MINUS, token.DEC, token.INC, token.MODULO:
 		return SUM
-	case token.ASTERISK, token.SLASH:
+	case token.ASTERISK, token.SLASH, token.MATCH:
 		return PRODUCT
 	case token.LPAREN:
 		return CALL
