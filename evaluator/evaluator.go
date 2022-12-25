@@ -16,7 +16,6 @@ var (
 )
 
 type Evaluator struct {
-	name     string
 	pos      token.Pos
 	err      *object.Error
 	errStack error

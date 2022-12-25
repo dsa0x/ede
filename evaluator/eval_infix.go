@@ -15,6 +15,9 @@ func (e *Evaluator) evalInfixExpression(operator string, left, right object.Obje
 	}
 	switch true {
 	case operator == token.EQ: // handle == for all object types
+		if left == nil || right == nil {
+			return object.NewErrorWithMsg("invalid infix operation for %v and %v", left, right)
+		}
 		if left.Equal(right) {
 			return TRUE
 		}
