@@ -16,14 +16,11 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 	switch boundRange := node.Boundary.(type) {
 	case *ast.ArrayLiteral:
 		for i, el := range boundRange.Elements {
-			env.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
-			env.Set(node.Variable.Value, e.Eval(el, env)) // bound loop variable
-			for _, stmt := range node.Statement.Statements {
-				result = e.Eval(stmt, env)
-				if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {
-					return result
-				}
-			}
+			// create an environment for the block statemet
+			blockEnv := object.NewEnvironment(env)
+			blockEnv.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
+			blockEnv.Set(node.Variable.Value, e.Eval(el, blockEnv)) // bound loop variable
+			result = e.evalBlockStmt(node.Statement, blockEnv)
 		}
 	case *ast.Identifier:
 		ident := e.Eval(boundRange, env)

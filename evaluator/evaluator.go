@@ -48,7 +48,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		left := e.Eval(node.Left, env)
 		result := e.evalPostfixExpression(node.Operator, left)
 		if _, ok := node.Left.(*ast.Identifier); ok && !e.isError(result) { // update identifier
-			env.Set(node.Left.Literal(), result)
+			env.Update(node.Left.Literal(), result)
 		}
 		return result
 	case *ast.PrefixExpression:
@@ -66,7 +66,8 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return e.evalLetExpression(node.Name.Value, node.Expr, env)
 	case *ast.BlockStmt:
-		return e.evalBlockStmt(node, env)
+		blockEnv := object.NewEnvironment(env)
+		return e.evalBlockStmt(node, blockEnv)
 	case *ast.ExpressionStmt:
 		return e.Eval(node.Expr, env)
 	case *ast.ConditionalStmt:
@@ -106,7 +107,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Pos())
 		}
 		res := e.Eval(node.Expr, env)
-		env.Set(node.Name.Value, res)
+		env.Update(node.Name.Value, res)
 		return res
 	case *ast.ForLoopStmt:
 		return e.evalForLoopStmt(node, env)
@@ -191,12 +192,13 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 	return nil
 }
 
+// evalBlockStmt evaluates the block statement. The env passed here
+// should be one scoped to the block only
 func (e *Evaluator) evalBlockStmt(node *ast.BlockStmt, env *object.Environment) object.Object {
 	var result object.Object
 	if node == nil {
 		return NULL
 	}
-
 	for _, stmt := range node.Statements {
 		result = e.Eval(stmt, env)
 		if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {

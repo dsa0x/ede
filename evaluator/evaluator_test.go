@@ -497,6 +497,18 @@ func TestEvalStatements(t *testing.T) {
 		{
 			input: `
 			let name = "foo";
+			let age = 10.5;
+			for i = range [1..10] {
+				let age = 4
+				age++;
+			};
+			age;
+		`,
+			result: 10.5,
+		},
+		{
+			input: `
+			let name = "foo";
 			let age = 30;
 			for i = range [1..3] {
 				age = age + i;
@@ -1201,6 +1213,22 @@ func TestEval_TwoSum(t *testing.T) {
 	}
 }
 
+func TestEval_BlockStmt(t *testing.T) {
+	input := `
+	let val = 30
+	for i = range [1..2] {
+		let val = 10
+	}
+	return val
+`
+
+	evaluated := testEval(input)
+	exp := 30
+	if !testObject(t, evaluated, exp) {
+		t.Fatalf("expected %v, got %v", exp, evaluated.Inspect())
+	}
+}
+
 func TestEval_Module(t *testing.T) {
 	t.Run("json.parse", func(t *testing.T) {
 		input := "import json;" +
@@ -1238,21 +1266,8 @@ func TestEval_Module(t *testing.T) {
 }
 
 func TestEval_Method_Error(t *testing.T) {
-	t.Run("unhandled", func(t *testing.T) {
+	t.Run("unhandled(identifier not found)", func(t *testing.T) {
 		input := "let obj = json.parse(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`);" +
-			"obj;"
-
-		evaluated := testEval(input)
-		ev, ok := evaluated.(*object.Null)
-		if !ok {
-			t.Fatalf("expected null to be returned, got %T", ev)
-		}
-	})
-
-	t.Run("identifier not found", func(t *testing.T) {
-		input := "let obj = match (json.parse(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`)) {\n" +
-			"case error: return error" +
-			"};" +
 			"obj;"
 
 		evaluated := testEval(input)
@@ -1266,21 +1281,22 @@ func TestEval_Method_Error(t *testing.T) {
 		}
 	})
 
-	// t.Run("method not found", func(t *testing.T) {
-	// 	input := "import json \n" +
-	// 		"let obj = json.stringify(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`);" +
-	// 		"obj;"
+	t.Run("handled error", func(t *testing.T) {
+		input := "let obj = match (json.parse(`{\"numbers\":[1,2],\"subjects\":{\"foo\":\"bar\"}}`)) {\n" +
+			"case error: return \"fallback\"" +
+			"};" +
+			"obj;"
 
-	// 	evaluated := testEval(input)
-	// 	ev, ok := evaluated.(*object.Null)
-	// 	if !ok {
-	// 		t.Fatalf("expected an error to be returned, got %T", ev)
-	// 	}
-	// 	exp := "unknown method 'stringify' for module 'json'"
-	// 	if !strings.Contains(ev.Message, exp) {
-	// 		t.Fatalf("Error message '%s' does not contain '%s'", ev.Message, exp)
-	// 	}
-	// })
+		evaluated := testEval(input)
+		ev, ok := evaluated.(*object.String)
+		if !ok {
+			t.Fatalf("expected an error to be returned, got %T", ev)
+		}
+		exp := "fallback"
+		if ev.Value != exp {
+			t.Fatalf("expected '%s', gor '%s'", ev.Value, exp)
+		}
+	})
 
 	t.Run("attr not found", func(t *testing.T) {
 		input :=
