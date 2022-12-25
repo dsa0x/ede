@@ -5,6 +5,8 @@ import (
 	"ede/object"
 	"ede/token"
 	"fmt"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 var (
@@ -14,8 +16,10 @@ var (
 )
 
 type Evaluator struct {
-	pos token.Pos
-	err *object.Error
+	name     string
+	pos      token.Pos
+	err      *object.Error
+	errStack error
 }
 
 func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
@@ -43,7 +47,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.PostfixExpression:
 		left := e.Eval(node.Left, env)
 		result := e.evalPostfixExpression(node.Operator, left)
-		if _, ok := node.Left.(*ast.Identifier); ok && !isError(result) { // update identifier
+		if _, ok := node.Left.(*ast.Identifier); ok && !e.isError(result) { // update identifier
 			env.Set(node.Left.Literal(), result)
 		}
 		return result
@@ -55,7 +59,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.IndexExpression:
 		return e.evalIndexExpression(node, env)
 	case *ast.Program:
-		return evalProgram(node, env)
+		return e.evalProgram(node, env)
 	case *ast.LetStmt:
 		if expr, ok := node.Expr.(*ast.MatchExpression); ok {
 			return e.evalMatchExpression(&node.Name.Value, expr, env)
@@ -73,7 +77,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Function{Body: node.Body, Params: node.Params, ParentEnv: env}
 	case *ast.CallExpression:
 		fn := e.Eval(node.Function, env)
-		if isError(fn) {
+		if e.isError(fn) {
 			return fn
 		}
 		args := e.evalArgs(node.Args, env)
@@ -84,7 +88,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.HashLiteral:
 		entries := e.evalPairs(node.Pair, env)
 		for _, val := range entries {
-			if isError(val) {
+			if e.isError(val) {
 				return val
 			}
 		}
@@ -128,7 +132,7 @@ func (e *Evaluator) evalArgs(args []ast.Expression, env *object.Environment) []o
 
 	for i, arg := range args {
 		result = append(result, e.Eval(arg, env))
-		if isError(result[i]) {
+		if e.isError(result[i]) {
 			return []object.Object{result[i]}
 		}
 	}
@@ -147,7 +151,7 @@ func (e *Evaluator) evalPairs(args map[ast.Expression]ast.Expression, env *objec
 			return result
 		}
 		valueObj := e.Eval(value, env)
-		if isError(keyObj) || isError(valueObj) {
+		if e.isError(keyObj) || e.isError(valueObj) {
 			result[keyString] = valueObj
 			return result
 		}
@@ -168,7 +172,7 @@ func (e *Evaluator) evalSet(args map[ast.Expression]struct{}, env *object.Enviro
 			keyObj = e.err
 		}
 
-		if isError(e.err) {
+		if e.isError(e.err) {
 			result[object.EmptyHashKey] = struct{}{}
 			return result
 		}
@@ -237,10 +241,10 @@ func (e *Evaluator) evalIfExpression(node *ast.IfStmt, env *object.Environment) 
 
 func (e *Evaluator) evalLetExpression(nodeName string, RHS ast.Expression, env *object.Environment) object.Object {
 	expr := e.Eval(RHS, env)
-	if !isError(expr) {
+	if !e.isError(expr) {
 		env.Set(nodeName, expr)
 	}
-	return expr
+	return NULL
 }
 
 func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpression, env *object.Environment) object.Object {
@@ -258,7 +262,7 @@ func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpres
 	// create an environment for the match block, and
 	// set the error value for the block
 	matchEnv := object.NewEnvironment(env)
-	if isError(expr) {
+	if e.isError(expr) {
 		matchEnv.Set(token.ErrorIdentifier, expr)
 	}
 
@@ -269,12 +273,12 @@ func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpres
 		// if the case matches the match expression, return the case output
 		if pattern != nil && pattern.Equal(expr) {
 			val := e.Eval(matchCase.Output, matchEnv)
-			matchEnv.Set(token.ErrorIdentifier, object.NewString(fmt.Sprintf("ERROR: %s", expr.Inspect())))
+			matchEnv.Set(token.ErrorIdentifier, object.NewString(fmt.Sprintf("error: %s", expr.Inspect())))
 			return val
 		}
 		// it is important to check this after the equality check, so we
-		// can differentiate other runtime errors from the one we're checking
-		if isError(pattern) {
+		// can differentiate other runtime errors from the one returned from the match expression
+		if e.isError(pattern) {
 			return pattern
 		}
 	}
@@ -291,7 +295,7 @@ func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpres
 
 func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.Environment) object.Object {
 	left := e.Eval(node.Left, env)
-	if isError(left) {
+	if e.isError(left) {
 		return left
 	}
 
@@ -315,7 +319,7 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 }
 
 func (e *Evaluator) evalPostfixExpression(operator string, left object.Object) object.Object {
-	if isError(left) {
+	if e.isError(left) {
 		return left
 	}
 	if left.Type() == object.INT_OBJ {
@@ -363,14 +367,14 @@ func (e *Evaluator) booleanObj(boolean bool) *object.Boolean {
 }
 
 func (e *Evaluator) applyFunction(fn object.Object, args []object.Object) object.Object {
-	if isError(fn) {
+	if e.isError(fn) {
 		return fn
 	}
-	for _, arg := range args {
-		if isError(arg) {
-			return arg
-		}
-	}
+	// for _, arg := range args {
+	// 	if e.isError(arg) {
+	// 		return arg
+	// 	}
+	// }
 	switch fn := fn.(type) {
 	case *object.Function:
 		fnEnv := object.NewEnvironment(fn.ParentEnv)
@@ -408,13 +412,17 @@ func isTruthy(obj object.Object) bool {
 }
 
 // isError returns true if the object is an error. If the object is nil, error is false
-func isError(obj object.Object) bool {
+func (e *Evaluator) isError(obj object.Object) bool {
 	if obj != nil {
 		errObj, ok := obj.(*object.Error)
 		if !ok {
 			return false
 		}
-		return errObj != nil
+		if errObj == nil {
+			return false
+		}
+		e.errStack = multierror.Append(e.errStack, errObj.Native().(error))
+		return true
 	}
 	return false
 }

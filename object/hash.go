@@ -18,8 +18,8 @@ func (v *Hash) Inspect() string {
 	for key, el := range v.Entries {
 		entries = append(entries, fmt.Sprintf("%s: %s", key, el.Inspect()))
 	}
-	buf.WriteString(strings.Join(entries, ","))
-	buf.WriteString("}")
+	buf.WriteString(strings.Join(entries, ", \n"))
+	buf.WriteString("\n}")
 	return buf.String()
 }
 

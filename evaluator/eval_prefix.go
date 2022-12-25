@@ -6,7 +6,7 @@ import (
 )
 
 func (e *Evaluator) evalPrefixExpression(operator string, right object.Object) object.Object {
-	if isError(right) {
+	if e.isError(right) {
 		return right
 	}
 	switch true {

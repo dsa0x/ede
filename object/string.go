@@ -29,7 +29,8 @@ func (a *String) GetMethod(name string, eval Evaluator) *Builtin {
 	switch name {
 	case "split":
 		return a.Split()
-
+	case "replace":
+		return a.Replace()
 	}
 	return nil
 }
@@ -47,6 +48,26 @@ func (a *String) Split() *Builtin {
 			strs := strings.Split(a.Value, sep.Value)
 			entries := lo.Map(strs, func(val string, i int) any { return val })
 			return NewArray(entries)
+		},
+	}
+}
+
+func (a *String) Replace() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			if len(args) != 2 {
+				return CountArgumentError("2", len(args))
+			}
+			old, ok := args[0].(*String)
+			if !ok {
+				return methodExpectArgumentError("split", "String", string(args[0].Type()))
+			}
+			new, ok := args[1].(*String)
+			if !ok {
+				return methodExpectArgumentError("split", "String", string(args[0].Type()))
+			}
+			str := strings.Replace(a.Value, old.Value, new.Value, -1)
+			return NewString(str)
 		},
 	}
 }

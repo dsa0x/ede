@@ -16,7 +16,7 @@ func (e *Evaluator) evalObjectDotExpr(node *ast.ObjectMethodExpression, env *obj
 	}
 
 	obj := e.Eval(node.Object, env)
-	if isError(obj) {
+	if e.isError(obj) {
 		return obj
 	}
 	if obj == nil {

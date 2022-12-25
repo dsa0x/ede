@@ -13,7 +13,7 @@ var (
 	INT_OBJ          Type = "INT"
 	FLOAT_OBJ        Type = "FLOAT"
 	FUNCTION_OBJ     Type = "FUNCTION"
-	ERROR_OBJ        Type = "ERROR"
+	ERROR_OBJ        Type = "error"
 	NULL_OBJ         Type = "NULL"
 	RETURN_VALUE_OBJ Type = "RETURN_VALUE"
 	BUILTIN_OBJ      Type = "BUILTIN"

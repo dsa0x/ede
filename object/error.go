@@ -7,7 +7,7 @@ func (a *Error) Native() any {
 }
 
 func NewErrorWithMsg(msg string, format ...any) *Error {
-	return &Error{Message: "ERROR: " + fmt.Sprintf(msg, format...)}
+	return &Error{Message: "error: " + fmt.Sprintf(msg, format...)}
 }
 
 func NewError(msg error) *Error {

@@ -86,7 +86,7 @@ var (
 	// to the index in a loop variable
 	IndexIdentifier = "index"
 
-	ErrorIdentifier = "ERROR"
+	ErrorIdentifier = "error"
 )
 
 var keywords = map[string]TokenType{

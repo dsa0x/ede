@@ -3,9 +3,11 @@ package evaluator
 import (
 	"ede/ast"
 	"ede/object"
+
+	"github.com/hashicorp/go-multierror"
 )
 
-func evalProgram(node *ast.Program, env *object.Environment) object.Object {
+func (e *Evaluator) evalProgram(node *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 
 	if node.ParseErrors != nil {
@@ -16,7 +18,7 @@ func evalProgram(node *ast.Program, env *object.Environment) object.Object {
 		if _, isComment := stmt.(*ast.CommentStmt); isComment {
 			continue
 		}
-		result = (&Evaluator{}).Eval(stmt, env)
+		result = e.Eval(stmt, env)
 		if result == nil {
 			return NULL
 		}
@@ -27,6 +29,7 @@ func evalProgram(node *ast.Program, env *object.Environment) object.Object {
 
 		// terminate after encountering an error
 		if result.Type() == object.ERROR_OBJ {
+			e.errStack = multierror.Append(e.errStack, result.Native().(error))
 			return result
 		}
 	}

@@ -745,7 +745,7 @@ func TestParsingImportJson(t *testing.T) {
 func TestParsingMatchExpressions(t *testing.T) {
 	input := `
 	let obj = match ((10*10).type()) {
-	case ERROR: return println(ERROR)
+	case error: return println(error)
 	default: println(obj)
 	}`
 

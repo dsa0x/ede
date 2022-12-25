@@ -7,10 +7,10 @@ import (
 )
 
 func (e *Evaluator) evalInfixExpression(operator string, left, right object.Object) object.Object {
-	if isError(left) {
+	if e.isError(left) {
 		return left
 	}
-	if isError(right) {
+	if e.isError(right) {
 		return right
 	}
 	switch true {
