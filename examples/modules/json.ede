@@ -1,0 +1,12 @@
+import json
+let obj = `{
+   "object_or_array": "object",
+   "empty": false,
+   "parse_time_nanoseconds": 19608,
+   "validate": true,
+   "size": 1
+}`
+let parsed = json.parse(obj)
+let str = json.string(parsed)
+println(obj.replace(" ",""))
+let a = 23

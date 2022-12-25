@@ -130,11 +130,8 @@ func (e *Evaluator) evalReturnExpression(node *ast.ReturnExpression, env *object
 func (e *Evaluator) evalArgs(args []ast.Expression, env *object.Environment) []object.Object {
 	result := make([]object.Object, 0, len(args))
 
-	for i, arg := range args {
+	for _, arg := range args {
 		result = append(result, e.Eval(arg, env))
-		if e.isError(result[i]) {
-			return []object.Object{result[i]}
-		}
 	}
 
 	return result
@@ -243,8 +240,10 @@ func (e *Evaluator) evalLetExpression(nodeName string, RHS ast.Expression, env *
 	expr := e.Eval(RHS, env)
 	if !e.isError(expr) {
 		env.Set(nodeName, expr)
+		return NULL
 	}
-	return NULL
+	// if the let expr is an error, we return it so we can terminate the program
+	return expr
 }
 
 func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpression, env *object.Environment) object.Object {
@@ -254,16 +253,15 @@ func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpres
 		return object.NewErrorWithMsg("match expression cannot be null")
 	}
 
-	// if the match is called from a let statement, set its expression to the identifier
-	if exprIdent != nil {
-		env.Set(*exprIdent, expr)
-	}
-
 	// create an environment for the match block, and
 	// set the error value for the block
 	matchEnv := object.NewEnvironment(env)
 	if e.isError(expr) {
 		matchEnv.Set(token.ErrorIdentifier, expr)
+	} else if exprIdent != nil {
+		// if the match is called from a let statement,
+		// and no error, set its expression to the identifier
+		env.Set(*exprIdent, expr)
 	}
 
 	for _, matchCase := range node.Cases {
@@ -285,7 +283,7 @@ func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpres
 
 	// if no case matches and there is a default block
 	if node.Default != nil {
-		return e.Eval(node.Default, env)
+		return e.Eval(node.Default, matchEnv)
 	}
 
 	// if no case matches, set the expr to the let stmt

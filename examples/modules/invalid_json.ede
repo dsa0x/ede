@@ -1,0 +1,17 @@
+import json
+let invalid_obj = `{
+   "object_or_array": "object",
+   "empty": false,
+   "parse_time_nanoseconds": 19608,
+   "validate": true,
+   "size":
+}`
+let parsed_obj = match (json.parse(invalid_obj)) {
+    case error: println("error caught in match:", error)
+}
+println()
+println("program continues after match")
+println()
+let parsed_obj = json.parse(invalid_obj)
+
+println("uncaught error should have terminated the program")

@@ -1080,6 +1080,22 @@ func TestEval_Files(t *testing.T) {
 			t.Fatalf("expected value to be false, got %v", _evaluated.Value)
 		}
 	})
+
+	t.Run("invalid json", func(t *testing.T) {
+		data, err := os.ReadFile("../examples/modules/invalid_json.ede")
+		if err != nil {
+			t.Fatalf("expected no error, got %s", err)
+		}
+		evaluated := testEval(string(data))
+		_evaluated, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Fatalf("expected an error to be returned, got %T", evaluated)
+		}
+		exp := "error parsing string as json"
+		if !strings.Contains(_evaluated.Message, exp) {
+			t.Fatalf("expected value to be %s, got %s", _evaluated.Message, exp)
+		}
+	})
 }
 
 func TestEval(t *testing.T) {
