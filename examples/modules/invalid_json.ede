@@ -10,7 +10,7 @@ let parsed_obj = match (json.parse(invalid_obj)) {
     case error: println("error caught in match:", error)
 }
 println()
-println("program continues after match")
+println("program continues after match handles error")
 println()
 let parsed_obj = json.parse(invalid_obj)
 

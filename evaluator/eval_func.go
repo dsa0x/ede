@@ -50,7 +50,11 @@ func (e *Evaluator) evalObjectMethodExpr(obj object.Object, call *ast.CallExpres
 
 	method := methodableObj.GetMethod(ident.Value, e)
 	if method == nil {
-		return object.NewErrorWithMsg(fmt.Sprintf("unknown method '%s' for module '%s'", ident.Value, obj.Inspect()))
+		if obj.Type() == object.IMPORT_OBJ {
+			return object.NewErrorWithMsg(fmt.Sprintf("unknown method '%s' for module '%s'", ident.Value, obj.Inspect()))
+		} else {
+			return object.NewErrorWithMsg(fmt.Sprintf("unknown method '%s' for type '%T'", ident.Value, obj))
+		}
 	}
 	return method.Fn(args...)
 }

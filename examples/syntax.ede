@@ -1,0 +1,50 @@
+// assignments
+let a = 100
+let b = "foo"
+a += 20
+
+
+// methods
+let size = b.length()
+println("true: ", size == 3)
+
+// operators
+let c = 10 + 10 * 10 - 20
+let bar = b + "baz"
+let d = (10 + (2 * 3))
+let bool = true || false
+let obj = {"d":d, "a":a, "bar":bar, "bool":bool}
+println({"obj":obj})
+
+// imports
+import json
+
+// import method
+let str = json.string(obj)
+
+// error handling
+let parsed = match (json.parse(obj + "fail")) {
+    case error: println("allowed to fail")
+}
+
+// arrays
+let arr = [1,2,3]
+arr = [1..10]
+println("array length: ", arr.length())
+
+// conditionals
+if (arr.length() < 10) {
+    println("yay")
+} else {
+    println("nay")
+}
+
+// for loop
+for el = range arr {
+    printf("index","=", index)
+    println("val", "=", el)
+}
+
+// reserved keywords
+// let, null, index
+

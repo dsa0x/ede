@@ -16,9 +16,9 @@ func (v *Hash) Inspect() string {
 	buf.WriteString("{\n")
 	entries := []string{}
 	for key, el := range v.Entries {
-		entries = append(entries, fmt.Sprintf("%s: %s", key, el.Inspect()))
+		entries = append(entries, fmt.Sprintf("  %s: %s", key, el.Inspect()))
 	}
-	buf.WriteString(strings.Join(entries, ", \n"))
+	buf.WriteString(strings.Join(entries, ",\n  "))
 	buf.WriteString("\n}")
 	return buf.String()
 }

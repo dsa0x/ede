@@ -31,6 +31,8 @@ func (a *String) GetMethod(name string, eval Evaluator) *Builtin {
 		return a.Split()
 	case "replace":
 		return a.Replace()
+	case "length":
+		return a.Length()
 	}
 	return nil
 }
@@ -68,6 +70,14 @@ func (a *String) Replace() *Builtin {
 			}
 			str := strings.Replace(a.Value, old.Value, new.Value, -1)
 			return NewString(str)
+		},
+	}
+}
+
+func (a *String) Length() *Builtin {
+	return &Builtin{
+		Fn: func(args ...Object) Object {
+			return &Int{Value: int64(len(a.Value))}
 		},
 	}
 }

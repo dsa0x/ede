@@ -20,7 +20,7 @@ func (e *Evaluator) evalProgram(node *ast.Program, env *object.Environment) obje
 		}
 		result = e.Eval(stmt, env)
 		if result == nil {
-			return NULL
+			continue
 		}
 		// return internal value
 		if result.Type() == object.RETURN_VALUE_OBJ {

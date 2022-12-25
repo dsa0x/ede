@@ -217,7 +217,7 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 		ev, _ := strconv.ParseFloat(fmt.Sprint(evaluated), 64)
 		return testFloatObject(t, obj, ev)
 	case nil:
-		return obj.Type() == object.NULL_OBJ
+		return obj == nil || obj.Type() == object.NULL_OBJ
 	case error:
 		return obj.Type() == object.ERROR_OBJ && obj.Inspect() == evaluated.Error()
 	case []string:
@@ -1116,30 +1116,8 @@ func TestEval(t *testing.T) {
 	let arr = [1..10];
 	`
 
-	input = `// https://leetcode.com/problems/valid-parentheses/
-	let matches = ["{}","()","[]"]
-	
-	let is_match = func(el) { return matches.contains(el) }
-	
-	let isValid = func(input) {
-		let stack = []
-		for i = range input.split("") {
-			let top = stack.last()
-			let str = top + i
-			println("str is: ", str)
-			if (is_match(str)) {
-				stack.pop()
-			} else {
-				stack.push(i)
-			}
-		}
-	
-		return stack.length() == 0
-	}
-	
-	isValid("()[]{}")
-	// println("true: ",isValid("()[]{}"))
-	// println("false: ",isValid("([]{}"))
+	input = `
+	println({"d":"dd","c":{"e":1}})
 	`
 
 	evaluated := testEval(input)
