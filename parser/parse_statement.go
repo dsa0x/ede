@@ -198,17 +198,18 @@ func (p *Parser) parseImportStmt() *ast.ImportStmt {
 
 func (p *Parser) parseMatchExpression() ast.Expression {
 	stmt := &ast.MatchExpression{ValuePos: p.pos, Token: p.currToken, Cases: make([]ast.MatchCase, 0)}
-	if !p.advanceCurrTokens(token.MATCH, token.LPAREN) {
-		p.addError(unexpectedTokenError(token.LPAREN, string(p.currToken.Type))) // TODO: may be incorrect
+	if !p.advanceCurrTokenIs(token.MATCH) {
+		p.addError(unexpectedTokenError(token.MATCH, string(p.currToken.Type)))
 		return nil
 	}
 
 	stmt.Expression = p.parseExpr(LOWEST)
 
-	if !p.advanceCurrTokens(token.RPAREN, token.LBRACE) {
-		p.addError(unexpectedTokenError(token.RBRACE, p.currToken.Literal))
+	if !p.advanceCurrTokenIs(token.LBRACE) {
+		p.addError(unexpectedTokenError(token.LBRACE, p.currToken.Literal))
 		return nil
 	}
+	p.advanceCurrTokenIs(token.NEWLINE) // advance if newline
 
 	// function to parse each case of the match block
 	parseMatchCase := func() ast.Expression {
@@ -224,7 +225,7 @@ func (p *Parser) parseMatchExpression() ast.Expression {
 outerloop:
 	for {
 		switch p.currToken.Type {
-		case token.RBRACE: // single case
+		case token.RBRACE:
 			p.advanceToken()
 			return stmt
 		case token.CASE:
@@ -294,7 +295,7 @@ func (p *Parser) parseForStmt() ast.Statement {
 		forLoopStmt.Statement = p.parseBlockStmt()
 
 	default:
-		p.addError("error")
+		p.addError("unexpected token in match stmt")
 		return nil
 	}
 	return forLoopStmt

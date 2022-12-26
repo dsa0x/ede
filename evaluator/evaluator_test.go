@@ -1130,16 +1130,20 @@ func TestEval_Match(t *testing.T) {
 	t.Run("errored", func(t *testing.T) {
 		input := `
 	println("starting")
-	let obj = match (10*"a") {
-	case obj.type() == error: return error
+	let obj = match 10*"a" {
+	case error: return error
 	default: println(obj)
 	}
 	println("should not get here")
 	`
 
 		evaluated := testEval(input)
-		if evaluated, ok := evaluated.(*object.Error); !ok {
+		_evaluated, ok := evaluated.(*object.Error)
+		if !ok {
 			t.Fatalf("expected an error to be returned, got %T", evaluated)
+		}
+		if !strings.Contains(_evaluated.Message, "invalid infix operator * for (10) and (a)") {
+			t.Fatalf("expected error message to be 'invalid infix operator * for (10) and (a)', got '%s'", _evaluated.Message)
 		}
 	})
 

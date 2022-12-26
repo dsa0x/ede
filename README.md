@@ -4,7 +4,7 @@ Yet another scripting language.
 
 Ede is designed to be easy to learn and use, with a simple, lightweight syntax and support for common programming constructs such as variables, loops, and conditionals. The name "ede" means "language" in Yoruba, a language spoken in West Africa.
 
-Ede is mostly inspired by the book interpreteringo.com. It employ a go-like syntax, albeit untyped, and also from other languages.
+The inspiration for writing Ede came from the book [Writing An Interpreter In Go](https://interpreterbook.com/). Ede employs a go-like syntax, albeit untyped, and also from other languages.
 
 ![Ede](./images/fib.gif)
 
@@ -36,7 +36,7 @@ Ede supports syntax highlighting for vscode. To enable it, copy the folder `ede-
 
 ## Tasks
 
-[ ] Set algebra
-[ ] Date type
-[ ] Modules
-[ ] Syntax highlighting
+[] Set algebra
+[] Date type
+[] Modules
+[x] Syntax highlighting
