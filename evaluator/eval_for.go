@@ -27,6 +27,9 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 		return result
 	case *ast.Identifier:
 		ident := e.Eval(boundRange, env)
+		if ident == nil {
+			return object.NewErrorWithMsg("invalid identifier '%s'", boundRange.Value)
+		}
 		arr = ident.(*object.Array) // TODO: may change when we support more
 	case *ast.ObjectMethodExpression:
 		ident := e.Eval(boundRange, env)
@@ -46,5 +49,8 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 			}
 		}
 	}
-	return result
+	// if the returned value is a return object or an error,
+	// then we would have returned
+	// else we return nil, because it's a statement
+	return NULL
 }

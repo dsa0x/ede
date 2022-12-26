@@ -46,5 +46,17 @@ for el = range arr {
 }
 
 // reserved keywords
-// let, null, index
+// let, nil, index
 
+// functions
+let add = func() {
+    let sum = 0
+    for el = range arr {
+        sum += el
+    }
+    return sum
+}
+
+// function call
+let total = add()
+println("total", "=", total)

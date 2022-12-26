@@ -37,7 +37,8 @@
         { "match": "\\belse\\b", "name": "keyword.control.else.ede" },
         { "match": "\\brange\\b", "name": "keyword.control.range.ede" },
         { "match": "\\bfor\\b", "name": "keyword.control.for.ede" },
-        { "match": "\\bmatch\\b", "name": "keyword.control.match.ede" }
+        { "match": "\\bmatch\\b", "name": "keyword.control.match.ede" },
+        { "match": "\\breturn\\b", "name": "keyword.control.return.ede" }
       ]
     },
     "keywords": {
