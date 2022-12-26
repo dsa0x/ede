@@ -1,0 +1,186 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ede",
+  "scopeName": "source.ede",
+  "fileTypes": ["ede"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#semicolon" },
+    { "include": "#ctrl" },
+    { "include": "#keywords" },
+    { "include": "#numbers" },
+    { "include": "#strings" },
+    { "include": "#constants" },
+    { "include": "#operators" },
+    { "include": "#assignment" },
+    { "include": "#methods" },
+    { "include": "#identifiers" },
+    { "include": "#parenthesis_expression" },
+    { "include": "#index_expression" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "match": "//.*$", "name": "comment.line.double-slash.ede" }
+      ]
+    },
+    "semicolon": {
+      "name": "punctuation.terminator.ede",
+      "match": ";"
+    },
+    "ctrl": {
+      "patterns": [
+        { "match": "\\blet\\b", "name": "keyword.control.let.ede" },
+        { "match": "\\bfunc\\b", "name": "keyword.control.func.ede" },
+        { "match": "\\bimport\\b", "name": "keyword.control.import.ede" },
+        { "match": "\\bif\\b", "name": "keyword.control.if.ede" },
+        { "match": "\\belse\\b", "name": "keyword.control.else.ede" },
+        { "match": "\\brange\\b", "name": "keyword.control.range.ede" },
+        { "match": "\\bfor\\b", "name": "keyword.control.for.ede" },
+        { "match": "\\bmatch\\b", "name": "keyword.control.match.ede" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        { "match": "\\bprintf\\b", "name": "meta.property-name.printf.ede" },
+        { "match": "\\bprintln\\b", "name": "meta.property-name.println.ede" },
+        { "match": "\\bprint\\b", "name": "meta.property-name.print.ede" },
+        { "match": "\\berror\\b", "name": "meta.property-name.error.ede" },
+        { "match": "\\bindex\\b", "name": "meta.property-name.index.ede" }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "match": "\\b\\d+\\b", "name": "constant.numeric.ede" },
+        {
+          "match": "\\b\\d+\\.\\d+\\b",
+          "name": "constant.numeric.ede"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ede",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.ede" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.ede" }
+          },
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.ede"
+            }
+          ]
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "match": "\\b(true|false)\\b",
+          "name": "constant.language.boolean.ede"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "\\+|\\-|\\*|\\/|\\%|\\^",
+          "name": "keyword.operator.arithmetic.ede"
+        },
+        {
+          "match": "\\=\\=|\\!\\=|\\<\\=|\\>\\=|\\<|\\>",
+          "name": "keyword.operator.comparison.ede"
+        },
+        {
+          "match": "\\!|\\&\\&|\\|\\|",
+          "name": "keyword.operator.logical.ede"
+        },
+        { "match": "\\.\\.", "name": "keyword.operator.other.ede" }
+      ]
+    },
+    "assignment": {
+      "patterns": [
+        { "match": "\\=", "name": "keyword.operator.assignment.ede" }
+      ]
+    },
+    "methods": {
+      "patterns": [
+        {
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "variable.other.ede" },
+            "2": { "name": "meta.property-name.ede" }
+          }
+        },
+        {
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\(\\b",
+          "name": "meta.property-name.ede"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b",
+          "name": "variable.other.ede"
+        }
+      ]
+    },
+    "parenthesis_expression": {
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.parens.begin.ede" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.ede" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#semicolon" },
+        { "include": "#ctrl" },
+        { "include": "#keywords" },
+        { "include": "#numbers" },
+        { "include": "#strings" },
+        { "include": "#constants" },
+        { "include": "#operators" },
+        { "include": "#assignment" },
+        { "include": "#methods" },
+        { "include": "#identifiers" },
+        { "include": "#parenthesis_expression" },
+        { "include": "#index_expression" }
+      ]
+    },
+    "index_expression": {
+      "begin": "\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.brackets.begin.ede" }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.brackets.end.ede" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#semicolon" },
+        { "include": "#ctrl" },
+        { "include": "#keywords" },
+        { "include": "#numbers" },
+        { "include": "#strings" },
+        { "include": "#constants" },
+        { "include": "#operators" },
+        { "include": "#assignment" },
+        { "include": "#methods" },
+        { "include": "#identifiers" },
+        { "include": "#parenthesis_expression" },
+        { "include": "#index_expression" }
+      ]
+    }
+  }
+}
