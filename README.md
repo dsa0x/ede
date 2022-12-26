@@ -28,6 +28,10 @@ You can then run your code using the following command:
 ede filename.ede
 ```
 
+### Syntax Highlighting
+
+Ede supports syntax highlighting for vscode. To enable it, copy the folder `ede-vscode` to your vscode extensions folder.
+
 ## Tasks
 
 [ ] Set algebra
