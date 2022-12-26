@@ -6,6 +6,8 @@ Ede is designed to be easy to learn and use, with a simple, lightweight syntax a
 
 Ede is mostly inspired by the book interpreteringo.com. It employ a go-like syntax, albeit untyped, and also from other languages.
 
+![Ede](./images/fib.gif)
+
 ### Installation
 
 To install ede, you will need to have Go installed on your system. You can then use the following command:
