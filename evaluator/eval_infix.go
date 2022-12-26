@@ -44,11 +44,11 @@ func (e *Evaluator) evalInfixExpression(operator string, left, right object.Obje
 		left := left.(*object.String)
 		right := right.(*object.String)
 		return e.evalStringInfixExpression(operator, left, right)
-	case left.Type() == object.STRING_OBJ && right.Type() == object.NULL_OBJ:
+	case left.Type() == object.STRING_OBJ && right.Type() == object.NIL_OBJ:
 		left := left.(*object.String)
 		right := object.NewString("")
 		return e.evalStringInfixExpression(operator, left, right)
-	case left.Type() == object.NULL_OBJ && right.Type() == object.STRING_OBJ:
+	case left.Type() == object.NIL_OBJ && right.Type() == object.STRING_OBJ:
 		left := object.NewString("")
 		right := right.(*object.String)
 		return e.evalStringInfixExpression(operator, left, right)

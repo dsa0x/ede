@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	NULL  = object.NULL
+	NULL  = object.NIL
 	TRUE  = object.TRUE
 	FALSE = object.FALSE
 )
@@ -352,7 +352,7 @@ func (e *Evaluator) evalBangOperator(operator string, right object.Object) objec
 		return e.booleanObj(len(*right.Entries) == 0)
 	case *object.Boolean:
 		return e.booleanObj(!right.Value)
-	case *object.Null:
+	case *object.Nil:
 		return TRUE
 	}
 	return e.EvalError(fmt.Sprintf("bang operator not valid for type %T", right), e.pos)

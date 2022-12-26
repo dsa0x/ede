@@ -102,7 +102,7 @@ func (a *Hash) Get() *Builtin {
 			}
 			entry, ok := a.Entries[key]
 			if !ok {
-				return NULL
+				return NIL
 			}
 			return entry
 		},
@@ -120,7 +120,7 @@ func (a *Hash) Set() *Builtin {
 				return invalidKeyError(key)
 			}
 			a.Entries[key] = args[1]
-			return NULL
+			return NIL
 		},
 	}
 }

@@ -14,7 +14,7 @@ var (
 	FLOAT_OBJ        Type = "FLOAT"
 	FUNCTION_OBJ     Type = "FUNCTION"
 	ERROR_OBJ        Type = "error"
-	NULL_OBJ         Type = "NULL"
+	NIL_OBJ          Type = "NIL"
 	RETURN_VALUE_OBJ Type = "RETURN_VALUE"
 	BUILTIN_OBJ      Type = "BUILTIN"
 	ARRAY_OBJ        Type = "ARRAY"
@@ -22,7 +22,7 @@ var (
 	SET_OBJ          Type = "SET"
 	IMPORT_OBJ       Type = "IMPORT"
 
-	NULL  = &Null{}
+	NIL   = &Nil{}
 	TRUE  = NewBoolean(true)
 	FALSE = NewBoolean(false)
 
@@ -68,12 +68,12 @@ type Hashable interface {
 }
 
 func (*Error) Type() Type       { return ERROR_OBJ }
-func (*Null) Type() Type        { return NULL_OBJ }
+func (*Nil) Type() Type         { return NIL_OBJ }
 func (*ReturnValue) Type() Type { return RETURN_VALUE_OBJ }
 func (*Builtin) Type() Type     { return BUILTIN_OBJ }
 
 func (v *Error) Inspect() string       { return fmt.Sprint(v.Message) }
-func (v *Null) Inspect() string        { return "null" }
+func (v *Nil) Inspect() string         { return "nil" }
 func (v *ReturnValue) Inspect() string { return v.Value.Inspect() }
 func (*Builtin) Inspect() string       { return "builtin fn" }
 
@@ -83,7 +83,7 @@ func (v *Error) Equal(obj Object) bool {
 	}
 	return false
 }
-func (v *Null) Equal(obj Object) bool        { return true }
+func (v *Nil) Equal(obj Object) bool         { return true }
 func (v *ReturnValue) Equal(obj Object) bool { return false }
 func (*Builtin) Equal(obj Object) bool       { return false }
 
@@ -97,7 +97,7 @@ func ToBoolean(obj Object) bool {
 		return obj.Value > 0
 	case *Float:
 		return obj.Value > 0
-	case *Null:
+	case *Nil:
 		return false
 	}
 	return false

@@ -13,7 +13,7 @@ type (
 	String      struct{ Value string }
 	Float       struct{ Value float64 }
 	Boolean     struct{ Value bool }
-	Null        struct{}
+	Nil         struct{}
 	Error       struct{ Message string }
 	ReturnValue struct{ Value Object }
 	Hash        struct{ Entries map[string]Object }
@@ -28,6 +28,6 @@ type (
 	Builtin   struct{ Fn BuiltinFn }
 )
 
-func (a *Null) Native() any {
+func (a *Nil) Native() any {
 	return nil
 }

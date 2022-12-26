@@ -217,7 +217,7 @@ func testObject(t *testing.T, obj object.Object, evaluated any) bool {
 		ev, _ := strconv.ParseFloat(fmt.Sprint(evaluated), 64)
 		return testFloatObject(t, obj, ev)
 	case nil:
-		return obj == nil || obj.Type() == object.NULL_OBJ
+		return obj == nil || obj.Type() == object.NIL_OBJ
 	case error:
 		return obj.Type() == object.ERROR_OBJ && obj.Inspect() == evaluated.Error()
 	case []string:
@@ -1154,7 +1154,7 @@ func TestEval_Match(t *testing.T) {
 	`
 
 		evaluated := testEval(input)
-		if evaluated, ok := evaluated.(*object.Null); !ok {
+		if evaluated, ok := evaluated.(*object.Nil); !ok {
 			t.Fatalf("expected *object.Null to be returned, got %T", evaluated)
 		}
 	})

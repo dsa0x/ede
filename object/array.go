@@ -113,7 +113,7 @@ func (a *Array) First() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(*a.Entries) == 0 {
-				return NULL
+				return NIL
 			}
 			return (*a.Entries)[0]
 		},
@@ -124,7 +124,7 @@ func (a *Array) Last() *Builtin {
 	return &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(*a.Entries) == 0 {
-				return NULL
+				return NIL
 			}
 			return (*a.Entries)[len(*a.Entries)-1]
 		},
