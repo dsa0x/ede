@@ -16,6 +16,7 @@ var (
 		token.FALSE,
 		token.INT,
 		token.SINGLE_COMMENT,
+		token.MATCH,
 	}
 )
 

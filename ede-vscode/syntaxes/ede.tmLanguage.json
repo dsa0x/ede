@@ -47,7 +47,8 @@
         { "match": "\\bprintln\\b", "name": "meta.property-name.println.ede" },
         { "match": "\\bprint\\b", "name": "meta.property-name.print.ede" },
         { "match": "\\berror\\b", "name": "meta.property-name.error.ede" },
-        { "match": "\\bindex\\b", "name": "meta.property-name.index.ede" }
+        { "match": "\\bindex\\b", "name": "meta.property-name.index.ede" },
+        { "match": "\\bnil\\b", "name": "meta.property-name.nil.ede" }
       ]
     },
     "numbers": {

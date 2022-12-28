@@ -64,6 +64,8 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 			return e.evalMatchExpression(&node.Name.Value, expr, env)
 		}
 		return e.evalLetExpression(node.Name.Value, node.Expr, env)
+	case *ast.MatchExpression:
+		return e.evalMatchExpression(nil, node, env)
 	case *ast.BlockStmt:
 		blockEnv := object.NewEnvironment(env)
 		return e.evalBlockStmt(node, blockEnv)
@@ -272,7 +274,9 @@ func (e *Evaluator) evalMatchExpression(exprIdent *string, node *ast.MatchExpres
 		// if the case matches the match expression, return the case output
 		if pattern != nil && pattern.Equal(expr) {
 			val := e.Eval(matchCase.Output, matchEnv)
-			matchEnv.Set(token.ErrorIdentifier, object.NewString(fmt.Sprintf("error: %s", expr.Inspect())))
+			if _, found := matchEnv.Get(token.ErrorIdentifier); found {
+				matchEnv.Set(token.ErrorIdentifier, object.NewString(fmt.Sprintf("error: %s", expr.Inspect())))
+			}
 			return val
 		}
 		// it is important to check this after the equality check, so we

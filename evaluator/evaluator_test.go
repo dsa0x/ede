@@ -1159,7 +1159,26 @@ func TestEval_Match(t *testing.T) {
 
 		evaluated := testEval(input)
 		if evaluated, ok := evaluated.(*object.Nil); !ok {
-			t.Fatalf("expected *object.Null to be returned, got %T", evaluated)
+			t.Fatalf("expected *object.Nil to be returned, got %T", evaluated)
+		}
+	})
+
+	t.Run("match statement", func(t *testing.T) {
+		input := `
+	println("starting")
+	let age = 20
+	match age < 10*10 {
+	case true: age = age + (10*10)
+	default: println("not true", age, "is not less than", 10 * 10)
+	}
+	println("should get here")
+
+	age 
+	`
+
+		evaluated := testEval(input)
+		if !testObject(t, evaluated, 120) {
+			t.Fatalf("expected integer to be returned, got %T", evaluated)
 		}
 	})
 }
