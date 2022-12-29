@@ -40,3 +40,4 @@ Ede supports syntax highlighting for vscode. To enable it, copy the folder `ede-
 - [ ] Date type
 - [ ] Modules
 - [x] Syntax highlighting
+- [ ] Is Type (e.g. is string, is number, is bool)

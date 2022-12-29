@@ -296,7 +296,7 @@ func (p *Parser) parseForStmt() ast.Statement {
 		forLoopStmt.Statement = p.parseBlockStmt()
 
 	default:
-		p.addError("unexpected token in match stmt")
+		p.addError(unexpectedTokenError(token.RANGE, p.currToken.Literal))
 		return nil
 	}
 	return forLoopStmt
