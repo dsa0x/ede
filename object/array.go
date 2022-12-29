@@ -45,6 +45,10 @@ func NewArray(arr []any) *Array {
 	return &Array{Entries: &entries}
 }
 
+func (a *Array) Items() []Object {
+	return *a.Entries
+}
+
 func (a *Array) Native() any {
 	arr := make([]any, len(*a.Entries))
 	for i, el := range *a.Entries {

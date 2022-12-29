@@ -6,13 +6,19 @@ import (
 	"ede/token"
 )
 
+type Iterable interface {
+	Items() []object.Object
+}
+
 func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environment) object.Object {
 	var result object.Object
 	if node == nil {
 		return NULL
 	}
 
-	var arr *object.Array
+	var arr Iterable
+	var iter object.Object
+	var ok bool
 
 	switch boundRange := node.Boundary.(type) {
 	case *ast.ArrayLiteral:
@@ -30,16 +36,16 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 		if ident == nil {
 			return object.NewErrorWithMsg("invalid identifier '%s'", boundRange.Value)
 		}
-		arr = ident.(*object.Array) // TODO: may change when we support more
+		iter = ident
 	case *ast.ObjectMethodExpression:
-		ident := e.Eval(boundRange, env)
-		arr, _ = ident.(*object.Array)
+		iter = e.Eval(boundRange, env)
 	}
 
-	if arr == nil {
-		return object.NewErrorWithMsg("invalid for loop range boundary type: %T", node.Boundary)
+	if arr, ok = iter.(Iterable); !ok {
+		return object.NewErrorWithMsg("for loop boundary type is not iterable, got %T", iter)
 	}
-	for i, entry := range *arr.Entries {
+
+	for i, entry := range arr.Items() {
 		env.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
 		env.Set(node.Variable.Value, entry) // bound loop variable
 		for _, stmt := range node.Statement.Statements {
