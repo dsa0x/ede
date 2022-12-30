@@ -30,7 +30,7 @@ func (p *Parser) precedence(tokenType token.TokenType) int {
 		return ASSIGN
 	case token.EQ, token.NEQ:
 		return EQ
-	case token.GT, token.LT, token.LTE, token.GTE:
+	case token.GT, token.LT, token.LTE, token.GTE, token.RANGE_ARRAY:
 		return LESSGREATER
 	case token.PLUS, token.MINUS, token.DEC, token.INC, token.MODULO:
 		return SUM
@@ -40,7 +40,7 @@ func (p *Parser) precedence(tokenType token.TokenType) int {
 		return CALL
 	case token.LBRACKET:
 		return INDEX
-	case token.RANGE_ARRAY, token.DOT:
+	case token.DOT:
 		return HIGHEST
 	}
 	return LOWEST

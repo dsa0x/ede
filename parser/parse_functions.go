@@ -228,25 +228,41 @@ func (p *Parser) parseMinusEqual(ident ast.Expression) ast.Expression {
 	return expr
 }
 
+// getInteger is a helper function to retrieve an integer
+func getInteger(expr ast.Expression) (int64, bool) {
+	switch expr := expr.(type) {
+	case *ast.IntegerLiteral:
+		return int64(expr.Value), true
+	case *ast.PrefixExpression:
+		if integer, ok := expr.Right.(*ast.IntegerLiteral); ok {
+			if expr.Operator == token.PLUS {
+				return int64(integer.Value), true
+			} else if expr.Operator == token.MINUS {
+				return int64(-integer.Value), true
+			}
+		}
+	}
+	return 0, false
+}
+
 func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
-	startL, ok := start.(*ast.IntegerLiteral)
+	startL, ok := getInteger(start)
 	if !ok {
 		return nil
 	}
+
 	expr := &ast.ArrayLiteral{Token: p.currToken, Elements: make([]ast.Expression, 0)}
-	if !p.advanceNextTokenIs(token.INT) {
-		p.addError(unexpectedTokenError(token.INT, p.nextToken.Literal))
-		return nil
-	}
+	p.advanceToken() // go to integer
 	end := p.parseExpr(LOWEST)
-	endL, ok := end.(*ast.IntegerLiteral)
+	endL, ok := getInteger(end)
 	if !ok {
 		return nil
 	}
-	for i := startL.Value; i <= endL.Value; i++ {
+	for i := startL; i <= endL; i++ {
 		expr.Elements = append(expr.Elements, &ast.IntegerLiteral{Value: i})
 	}
-	if !p.currTokenIs(token.LBRACE) && !p.currTokenIs(token.RBRACKET) { // TODO: usage in forloop and array literal should be diff
+	if !p.currTokenIs(token.LBRACE) && !p.currTokenIs(token.RBRACKET) { // TODO: error in forloop and array literal should be diff
+		p.addError("unexpected token %s", p.currToken.Literal)
 		return nil
 	}
 	p.advanceToken()

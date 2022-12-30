@@ -800,6 +800,54 @@ func TestEvalStatements_ArrayOperations(t *testing.T) {
 	}
 }
 
+func TestEvalStatements_RangeArray(t *testing.T) {
+
+	tests := []struct {
+		input  string
+		result any
+	}{
+		{
+			input: `
+			let arr = [1..5]
+			arr.length()
+			`,
+			result: 5,
+		},
+		{
+			input: `
+			let arr = [-5..-1];
+			arr.pop();
+			arr;
+			`,
+			result: []string{"-5", "-4", "-3", "-2"},
+		},
+		{
+			input: `
+			let arr = [-3..10];
+			let last = arr.last();
+			last;
+			`,
+			result: 10,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			if tt.result == false {
+				if evaluated, ok := evaluated.(*object.Boolean); ok {
+					if evaluated.Value == false {
+						return
+					}
+				}
+			}
+			if !testObject(t, evaluated, tt.result) {
+				t.Fatalf("expected %v, got %v", tt.result, evaluated.Inspect())
+			}
+		})
+	}
+}
+
 func TestEvalStatements_HashOperations(t *testing.T) {
 
 	tests := []struct {
@@ -1115,12 +1163,7 @@ func TestEval(t *testing.T) {
 	let arr = [1..10];
 	`
 
-	input = `let lang = "ede"
-	let lang_rev = ""
-	for i = range lang.reverse() {
-		rev += i
-	}
-	println(lang == lang_rev)
+	input = `let arr = [-5..-1]
 	`
 
 	evaluated := testEval(input)

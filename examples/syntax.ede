@@ -65,6 +65,9 @@ let add = func() {
 let total = add()
 println("total", "=", total)
 
+let arrk = [-10..-5].reverse()
+println(arrk)
+
 // inbuilt primitive methods
 let lang = "ede"
 let lang_rev = ""

@@ -2,14 +2,33 @@ package parser
 
 import (
 	"ede/ast"
+	"ede/token"
+	"fmt"
 	"strconv"
 )
 
 func (p *Parser) parseInteger() ast.Expression {
+	literal := int64(1)
+	switch p.currToken.Type {
+	case token.MINUS:
+		literal = -1
+		p.advanceToken()
+	case token.PLUS:
+		p.advanceToken()
+	case token.INT, token.IDENT:
+		break
+	default:
+		err := NewParseError(fmt.Errorf("invalid prefix operator %s for integer", p.currToken.Literal), p.currPos())
+		p.appendError(err)
+		return nil
+	}
 	expr := &ast.IntegerLiteral{Token: p.currToken}
 
-	val, _ := strconv.Atoi(p.currToken.Literal)
-	expr.Value = int64(val)
+	val, err := strconv.Atoi(p.currToken.Literal)
+	if err != nil {
+		return nil
+	}
+	expr.Value = int64(val) * literal
 	p.advanceToken()
 	return expr
 }

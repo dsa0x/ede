@@ -13,9 +13,21 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 		return nil
 	}
 
+	// if the first element of the array has a unary operator,
+	// we save it, and wrap the parse element in a prefix expression
+	// This is so that the look-ahead can still see the RANGE_ARRAY token
+	var unary token.Token
+	if p.currTokenIs(token.MINUS) || p.currTokenIs(token.PLUS) {
+		unary = p.currToken
+		p.advanceToken()
+	}
+
 	// if the array is from a range array e.g. let arr = [1..10]
 	if p.nextTokenIs(token.RANGE_ARRAY) {
 		start := p.parseInteger()
+		if unary != (token.Token{}) {
+			start = &ast.PrefixExpression{Operator: unary.Literal, Right: start, Token: unary}
+		}
 		return p.parseRangeArray(start)
 	}
 	// else if it is a normal array literal
@@ -25,6 +37,11 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 		return nil
 	}
 	p.advanceToken() // eat closing token
+
+	if unary != (token.Token{}) {
+		expr.Elements[0] = &ast.PrefixExpression{Operator: unary.Literal, Right: expr.Elements[0], Token: unary}
+	}
+
 	return expr
 }
 
