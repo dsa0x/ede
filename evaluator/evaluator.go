@@ -348,12 +348,14 @@ func (e *Evaluator) evalIndexExpression(node *ast.IndexExpression, env *object.E
 	switch left.Type() {
 	case object.ARRAY_OBJ:
 		left := left.(*object.Array)
-		if index, ok := node.Index.(*ast.IntegerLiteral); ok {
-			if int(index.Value) >= len(*left.Entries) {
-				return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*left.Entries)), node.Pos())
-			}
-			return (*left.Entries)[index.Value]
+		index, ok := e.Eval(node.Index, env).(*object.Int)
+		if !ok {
+			return e.EvalError(fmt.Sprintf("array index must be an integer, got %s", node.Index.Literal()), node.Pos())
 		}
+		if int(index.Value) >= len(*left.Entries) {
+			return e.EvalError(fmt.Sprintf("index %d out of range with length %d", index.Value, len(*left.Entries)), node.Pos())
+		}
+		return (*left.Entries)[index.Value]
 	case object.HASH_OBJ:
 		left := left.(*object.Hash)
 		index := node.Index.(*ast.StringLiteral)

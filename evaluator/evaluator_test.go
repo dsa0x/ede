@@ -559,6 +559,14 @@ func TestEvalStatements(t *testing.T) {
 		`,
 			result: []any{1, 2, 100, 4, 5, 6, 7, 8, 9, 10},
 		},
+		{
+			input: `
+			let arrk = [-10..-5].reverse()
+			let arr = arrk[arrk.length()-1]
+			arr
+		`,
+			result: -10,
+		},
 	}
 
 	for i, tt := range tests {
@@ -1387,7 +1395,9 @@ func TestEval(t *testing.T) {
 	`
 
 	input = `let arrk = [-10..-5].reverse()
-	arrk[1] = 10
+	println(arrk)
+	let arr = arrk[arrk.length()-1]
+	println(arr)
 	`
 
 	evaluated := testEval(input)
