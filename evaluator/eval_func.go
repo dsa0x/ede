@@ -33,6 +33,25 @@ func (e *Evaluator) evalObjectDotExpr(node *ast.ObjectMethodExpression, env *obj
 	return object.NewErrorWithMsg("expected method call or identifier, got %s", node.Method.TokenType())
 }
 
+func (e *Evaluator) evalRangeArray(node *ast.RangeArrayLiteral, env *object.Environment) object.Object {
+	_start := e.Eval(node.Start, env)
+	start, ok := _start.(*object.Int)
+	if !ok {
+		return start
+	}
+	_end := e.Eval(node.End, env)
+	end, ok := _end.(*object.Int)
+	if !ok {
+		return end
+	}
+	arr := object.NewArray(nil)
+	// range array is inclusive
+	for i := start.Value; i <= end.Value; i++ {
+		*arr.Entries = append(*arr.Entries, object.NewInt(i))
+	}
+	return arr
+}
+
 func (e *Evaluator) evalObjectMethodExpr(obj object.Object, call *ast.CallExpression, env *object.Environment) object.Object {
 
 	args := e.evalArgs(call.Args, env)

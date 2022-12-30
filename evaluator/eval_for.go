@@ -37,7 +37,7 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 			return object.NewErrorWithMsg("invalid identifier '%s'", boundRange.Value)
 		}
 		iter = ident
-	case *ast.ObjectMethodExpression:
+	case *ast.ObjectMethodExpression, *ast.RangeArrayLiteral:
 		iter = e.Eval(boundRange, env)
 	}
 
@@ -46,10 +46,11 @@ func (e *Evaluator) evalForLoopStmt(node *ast.ForLoopStmt, env *object.Environme
 	}
 
 	for i, entry := range arr.Items() {
-		env.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
-		env.Set(node.Variable.Value, entry) // bound loop variable
+		stmtEnv := object.NewEnvironment(env)
+		stmtEnv.Set(token.IndexIdentifier, &object.Int{Value: int64(i)})
+		stmtEnv.Set(node.Variable.Value, entry) // bound loop variable
 		for _, stmt := range node.Statement.Statements {
-			result = e.Eval(stmt, env)
+			result = e.Eval(stmt, stmtEnv)
 			if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {
 				return result
 			}

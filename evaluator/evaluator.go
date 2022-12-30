@@ -87,6 +87,8 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.ArrayLiteral:
 		entries := e.evalArgs(node.Elements, env)
 		return &object.Array{Entries: &entries}
+	case *ast.RangeArrayLiteral:
+		return e.evalRangeArray(node, env)
 	case *ast.HashLiteral:
 		entries := e.evalPairs(node.Pair, env)
 		for _, val := range entries {

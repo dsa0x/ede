@@ -829,6 +829,14 @@ func TestEvalStatements_RangeArray(t *testing.T) {
 			`,
 			result: 10,
 		},
+		{
+			input: `
+			let start = 5
+			let arr = [start..10];
+			arr.length();
+			`,
+			result: 6,
+		},
 	}
 
 	for i, tt := range tests {

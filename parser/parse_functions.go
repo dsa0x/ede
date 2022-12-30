@@ -19,7 +19,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *Parser) parseSetExpression(startPos token.Pos) ast.Expression {
-	expr := &ast.SetLiteral{Token: p.prevToken, ValuePos: startPos}
+	expr := &ast.SetLiteral{Token: p.prevToken}
 	set := make(map[ast.Expression]struct{})
 	elements := p.parseArguments(token.RBRACE)
 	for _, el := range elements {
@@ -246,25 +246,9 @@ func getInteger(expr ast.Expression) (int64, bool) {
 }
 
 func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
-	startL, ok := getInteger(start)
-	if !ok {
-		return nil
-	}
-
-	expr := &ast.ArrayLiteral{Token: p.currToken, Elements: make([]ast.Expression, 0)}
-	p.advanceToken() // go to integer
-	end := p.parseExpr(LOWEST)
-	endL, ok := getInteger(end)
-	if !ok {
-		return nil
-	}
-	for i := startL; i <= endL; i++ {
-		expr.Elements = append(expr.Elements, &ast.IntegerLiteral{Value: i})
-	}
-	if !p.currTokenIs(token.LBRACE) && !p.currTokenIs(token.RBRACKET) { // TODO: error in forloop and array literal should be diff
-		p.addError("unexpected token %s", p.currToken.Literal)
-		return nil
-	}
+	expr := &ast.RangeArrayLiteral{Token: p.currToken, Start: start}
+	p.advanceToken()
+	expr.End = p.parseExpr(LOWEST)
 	p.advanceToken()
 	return expr
 }
@@ -294,7 +278,7 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 	}
 
 	if !p.nextTokenIs(token.COLON) { // if it is a set (e.g. {1,2,3})
-		return p.parseSetExpression(expr.ValuePos)
+		return p.parseSetExpression(expr.Token.Pos)
 	}
 
 	for !p.currTokenIs(token.EOF) && !p.currTokenIs(token.RBRACE) {

@@ -24,35 +24,30 @@ type Expression interface {
 
 type (
 	LetStmt struct {
-		ValuePos token.Pos
-		Name     *Identifier
-		Expr     Expression
-		Token    token.Token
+		Name  *Identifier
+		Expr  Expression
+		Token token.Token
 	}
 
 	ExpressionStmt struct {
-		ValuePos token.Pos
-		Expr     Expression
-		Token    token.Token
+		Expr  Expression
+		Token token.Token
 	}
 
 	ReassignmentStmt struct {
-		ValuePos token.Pos
-		Name     *Identifier
-		Expr     Expression
-		Token    token.Token
+		Name  *Identifier
+		Expr  Expression
+		Token token.Token
 	}
 
 	BlockStmt struct {
 		Token      token.Token
 		Statements []Statement
-		ValuePos   token.Pos
 	}
 	ConditionalStmt struct {
 		Token     token.Token
 		Condition Expression
 		Statement Statement
-		ValuePos  token.Pos
 	}
 
 	ForLoopStmt struct {
@@ -60,27 +55,23 @@ type (
 		Variable  *Identifier
 		Boundary  Expression
 		Statement *BlockStmt
-		ValuePos  token.Pos
 	}
 
 	IfStmt struct {
 		Condition    Expression
 		Consequence  *ConditionalStmt
 		Alternatives []*ConditionalStmt
-		ValuePos     token.Pos
 		Token        token.Token
 	}
 
 	CommentStmt struct {
-		Value    string
-		ValuePos token.Pos
-		Token    token.Token
+		Value string
+		Token token.Token
 	}
 
 	ImportStmt struct {
-		Value    string
-		ValuePos token.Pos
-		Token    token.Token
+		Value string
+		Token token.Token
 	}
 
 	MatchCase struct {
@@ -91,69 +82,64 @@ type (
 		Expression Expression
 		Cases      []MatchCase
 		Default    Expression
-		ValuePos   token.Pos
 		Token      token.Token
 	}
 
 	Identifier struct {
-		Token    token.Token
-		Value    string
-		ValuePos token.Pos
+		Token token.Token
+		Value string
 	}
 
 	StringLiteral struct {
-		Token    token.Token
-		Value    string
-		ValuePos token.Pos
+		Token token.Token
+		Value string
 	}
 
 	IntegerLiteral struct {
-		Token    token.Token
-		Value    int64
-		ValuePos token.Pos
+		Token token.Token
+		Value int64
 	}
 
 	FloatLiteral struct {
-		Token    token.Token
-		Value    float64
-		ValuePos token.Pos
+		Token token.Token
+		Value float64
 	}
 
 	BooleanLiteral struct {
-		Token    token.Token
-		Value    bool
-		ValuePos token.Pos
+		Token token.Token
+		Value bool
 	}
 
 	RangeLiteral struct {
-		Token    token.Token
-		Start    int64
-		End      int64
-		ValuePos token.Pos
+		Token token.Token
+		Start int64
+		End   int64
 	}
 
 	FunctionLiteral struct {
-		Token    token.Token
-		Params   []*Identifier
-		Body     *BlockStmt
-		ValuePos token.Pos
+		Token  token.Token
+		Params []*Identifier
+		Body   *BlockStmt
 	}
 	ArrayLiteral struct {
 		Token    token.Token
 		Elements []Expression
-		ValuePos token.Pos
+	}
+
+	RangeArrayLiteral struct {
+		Token token.Token
+		Start Expression
+		End   Expression
 	}
 
 	HashLiteral struct {
-		Token    token.Token
-		Pair     map[Expression]Expression
-		ValuePos token.Pos
+		Token token.Token
+		Pair  map[Expression]Expression
 	}
 
 	SetLiteral struct {
 		Token    token.Token
 		Elements map[Expression]struct{}
-		ValuePos token.Pos
 	}
 
 	InfixExpression struct {
@@ -175,41 +161,35 @@ type (
 		Operator string
 		Token    token.Token
 		Left     Expression
-		ValuePos token.Pos
 	}
 
 	ReturnExpression struct {
-		ValuePos token.Pos
-		Expr     Expression
-		Token    token.Token
+		Expr  Expression
+		Token token.Token
 	}
 
 	IndexExpression struct {
-		ValuePos token.Pos
-		Left     Expression
-		Index    Expression
-		Token    token.Token
+		Left  Expression
+		Index Expression
+		Token token.Token
 	}
 
 	CallExpression struct {
 		Function Expression // this can be function literal or identifier
 		Args     []Expression
 		Token    token.Token
-		ValuePos token.Pos
 	}
 
 	ObjectMethodExpression struct { // e.g foo.bar()
-		Object   Expression
-		Method   Expression
-		Token    token.Token
-		ValuePos token.Pos
+		Object Expression
+		Method Expression
+		Token  token.Token
 	}
 
 	Program struct {
 		Token       token.Token
 		ParseErrors error
 		Statements  []Statement
-		ValuePos    token.Pos
 	}
 )
 
@@ -222,6 +202,7 @@ func (s *ConditionalStmt) stmtNode()        {}
 func (s *StringLiteral) stmtNode()          {}
 func (s *IntegerLiteral) stmtNode()         {}
 func (s *ArrayLiteral) stmtNode()           {}
+func (s *RangeArrayLiteral) stmtNode()      {}
 func (s *HashLiteral) stmtNode()            {}
 func (s *SetLiteral) stmtNode()             {}
 func (s *BooleanLiteral) stmtNode()         {}
@@ -243,6 +224,7 @@ func (s *StringLiteral) exprNode()          {}
 func (s *FunctionLiteral) exprNode()        {}
 func (s *IntegerLiteral) exprNode()         {}
 func (s *ArrayLiteral) exprNode()           {}
+func (s *RangeArrayLiteral) exprNode()      {}
 func (s *HashLiteral) exprNode()            {}
 func (s *SetLiteral) exprNode()             {}
 func (s *BooleanLiteral) exprNode()         {}
@@ -269,6 +251,7 @@ func (s *StringLiteral) Pos() token.Pos          { return s.Token.Pos }
 func (s *FunctionLiteral) Pos() token.Pos        { return s.Token.Pos }
 func (s *IntegerLiteral) Pos() token.Pos         { return s.Token.Pos }
 func (s *ArrayLiteral) Pos() token.Pos           { return s.Token.Pos }
+func (s *RangeArrayLiteral) Pos() token.Pos      { return s.Token.Pos }
 func (s *HashLiteral) Pos() token.Pos            { return s.Token.Pos }
 func (s *SetLiteral) Pos() token.Pos             { return s.Token.Pos }
 func (s *BooleanLiteral) Pos() token.Pos         { return s.Token.Pos }
@@ -286,23 +269,24 @@ func (s *IndexExpression) Pos() token.Pos        { return s.Token.Pos }
 func (s *ObjectMethodExpression) Pos() token.Pos { return s.Token.Pos }
 func (s *MatchExpression) Pos() token.Pos        { return s.Token.Pos }
 
-func (s *Program) Literal() string          { return "" } // TODO
-func (s *LetStmt) Literal() string          { return s.Token.Literal }
-func (s *ExpressionStmt) Literal() string   { return s.Token.Literal }
-func (s *BlockStmt) Literal() string        { return "" } // TODO
-func (s *CommentStmt) Literal() string      { return "" } // TODO
-func (s *ConditionalStmt) Literal() string  { return "" } // TODO
-func (s *ForLoopStmt) Literal() string      { return s.Token.Literal }
-func (s *StringLiteral) Literal() string    { return s.Value }
-func (s *FunctionLiteral) Literal() string  { return s.Token.Literal } //TODO
-func (s *IntegerLiteral) Literal() string   { return fmt.Sprint(s.Value) }
-func (s *ArrayLiteral) Literal() string     { return "" } // TODO
-func (s *HashLiteral) Literal() string      { return "" } // TODO
-func (s *SetLiteral) Literal() string       { return "" } // TODO
-func (s *BooleanLiteral) Literal() string   { return fmt.Sprint(s.Value) }
-func (s *FloatLiteral) Literal() string     { return fmt.Sprint(s.Value) }
-func (s *Identifier) Literal() string       { return s.Value }
-func (s *ReassignmentStmt) Literal() string { return s.Name.Literal() }
+func (s *Program) Literal() string           { return "" } // TODO
+func (s *LetStmt) Literal() string           { return s.Token.Literal }
+func (s *ExpressionStmt) Literal() string    { return s.Token.Literal }
+func (s *BlockStmt) Literal() string         { return "" } // TODO
+func (s *CommentStmt) Literal() string       { return "" } // TODO
+func (s *ConditionalStmt) Literal() string   { return "" } // TODO
+func (s *ForLoopStmt) Literal() string       { return s.Token.Literal }
+func (s *StringLiteral) Literal() string     { return s.Value }
+func (s *FunctionLiteral) Literal() string   { return s.Token.Literal } //TODO
+func (s *IntegerLiteral) Literal() string    { return fmt.Sprint(s.Value) }
+func (s *ArrayLiteral) Literal() string      { return "" } // TODO
+func (s *RangeArrayLiteral) Literal() string { return "" } // TODO
+func (s *HashLiteral) Literal() string       { return "" } // TODO
+func (s *SetLiteral) Literal() string        { return "" } // TODO
+func (s *BooleanLiteral) Literal() string    { return fmt.Sprint(s.Value) }
+func (s *FloatLiteral) Literal() string      { return fmt.Sprint(s.Value) }
+func (s *Identifier) Literal() string        { return s.Value }
+func (s *ReassignmentStmt) Literal() string  { return s.Name.Literal() }
 func (s *InfixExpression) Literal() string {
 	return fmt.Sprintf("(%s %s %s)", s.Left.Literal(), s.Operator, s.Right.Literal())
 }
@@ -331,6 +315,7 @@ func (s *StringLiteral) TokenType() token.TokenType          { return s.Token.Ty
 func (s *FunctionLiteral) TokenType() token.TokenType        { return s.Token.Type }
 func (s *IntegerLiteral) TokenType() token.TokenType         { return s.Token.Type }
 func (s *ArrayLiteral) TokenType() token.TokenType           { return s.Token.Type }
+func (s *RangeArrayLiteral) TokenType() token.TokenType      { return s.Token.Type }
 func (s *HashLiteral) TokenType() token.TokenType            { return s.Token.Type }
 func (s *SetLiteral) TokenType() token.TokenType             { return s.Token.Type }
 func (s *BooleanLiteral) TokenType() token.TokenType         { return s.Token.Type }

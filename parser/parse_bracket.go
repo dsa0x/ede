@@ -24,7 +24,7 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 
 	// if the array is from a range array e.g. let arr = [1..10]
 	if p.nextTokenIs(token.RANGE_ARRAY) {
-		start := p.parseInteger()
+		start := p.parseExpr(p.precedence(token.RANGE_ARRAY) + 1) // so it parses only the left side of RANGE_ARRAY
 		if unary != (token.Token{}) {
 			start = &ast.PrefixExpression{Operator: unary.Literal, Right: start, Token: unary}
 		}
