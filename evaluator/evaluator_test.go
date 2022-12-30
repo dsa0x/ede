@@ -1165,21 +1165,6 @@ func TestEval_Files(t *testing.T) {
 	})
 }
 
-func TestEval(t *testing.T) {
-	t.Skip()
-	input := `
-	let arr = [1..10];
-	`
-
-	input = `let arr = [-5..-1]
-	`
-
-	evaluated := testEval(input)
-	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {
-		t.Fatalf("%v", evaluated)
-	}
-}
-
 func TestEval_Match(t *testing.T) {
 	t.Run("errored", func(t *testing.T) {
 		input := `
@@ -1368,4 +1353,20 @@ func TestEval_Method_Error(t *testing.T) {
 			t.Fatalf("Error message '%s' does not contain '%s'", ev.Message, exp)
 		}
 	})
+}
+
+func TestEval(t *testing.T) {
+	t.Skip()
+	input := `
+	let arr = [1..10];
+	`
+
+	input = `let arrk = [-10..-5].reverse()
+	arrk[1] = 10
+	`
+
+	evaluated := testEval(input)
+	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {
+		t.Fatalf("%v", evaluated)
+	}
 }

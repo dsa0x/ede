@@ -6,17 +6,20 @@ import (
 	"fmt"
 )
 
+// Node is an interface implemented by all nodes
 type Node interface {
 	Pos() token.Pos
 	Literal() string
 	TokenType() token.TokenType
 }
 
+// Statement is an interface implemented by all statements
 type Statement interface {
 	Node
 	stmtNode()
 }
 
+// Expression is an interface implemented by all expressions
 type Expression interface {
 	Node
 	exprNode()
@@ -26,18 +29,18 @@ type (
 	LetStmt struct {
 		Name  *Identifier
 		Expr  Expression
-		Token token.Token
+		Token token.Token // let
 	}
 
 	ExpressionStmt struct {
 		Expr  Expression
-		Token token.Token
+		Token token.Token // the start token of the expression
 	}
 
 	ReassignmentStmt struct {
 		Name  *Identifier
 		Expr  Expression
-		Token token.Token
+		Token token.Token // =
 	}
 
 	BlockStmt struct {

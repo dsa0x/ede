@@ -15,12 +15,15 @@ var (
 	FALSE = object.FALSE
 )
 
+// Evaluator is a structure that will define methods to be used
+// to evaluate the AST nodes.
 type Evaluator struct {
 	pos      token.Pos
 	err      *object.Error
 	errStack error
 }
 
+// Eval walks through the AST and evaluates the nodes into an object
 func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	if node == nil {
 		return nil

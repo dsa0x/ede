@@ -6,6 +6,7 @@ import (
 	"ede/token"
 )
 
+// Iterable is any object that can be iterated over, e.g. arrays, strings
 type Iterable interface {
 	Items() []object.Object
 }
