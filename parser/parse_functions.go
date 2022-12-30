@@ -157,15 +157,17 @@ func (p *Parser) parseFunctionParams() []*ast.Identifier {
 
 func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 	var expr *ast.ReassignmentStmt
-	if id, ok := ident.(*ast.Identifier); ok {
-		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
-	} else {
+	switch ident := ident.(type) {
+	case *ast.Identifier:
+		expr = &ast.ReassignmentStmt{Name: ident, Token: p.currToken}
+		if token.IsReservedKeyword(expr.Token.Literal) {
+			p.addError("unexpected assignment of reserved keyword %s", expr.Token.Literal)
+			return nil
+		}
+	case *ast.IndexExpression:
+		expr = &ast.ReassignmentStmt{Name: ident, Token: p.currToken}
+	default:
 		p.addError("unexpected token assignment: %s", ident.Literal())
-		return nil
-	}
-
-	if token.IsReservedKeyword(expr.Token.Literal) {
-		p.addError("unexpected assignment of reserved keyword %s", expr.Token.Literal)
 		return nil
 	}
 

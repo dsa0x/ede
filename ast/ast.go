@@ -38,7 +38,7 @@ type (
 	}
 
 	ReassignmentStmt struct {
-		Name  *Identifier
+		Name  Expression // can be *Identifier or *IndexExpression
 		Expr  Expression
 		Token token.Token // =
 	}

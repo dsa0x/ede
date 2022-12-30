@@ -17,7 +17,6 @@ let bar = b + "baz"
 let d = (10 + (2 * 3))
 let bool = true || false
 let obj = {"d":d, "a":a, "bar":bar, "bool":bool}
-println({"obj":obj})
 let bool = !false
 
 // imports
@@ -35,6 +34,11 @@ let parsed = match (json.parse(obj + "fail")) {
 let arr = [1,2,3]
 arr = [1..10]
 println("array length: ", arr.length())
+
+// hashes
+let car = {"model":"fusion","name":"ford"}
+car["price"] = 10000
+println({"car":car})
 
 // conditionals
 if (arr.length() < 10) {
@@ -66,6 +70,7 @@ let total = add()
 println("total", "=", total)
 
 let arrk = [-10..-5].reverse()
+arrk[1] = 10
 println(arrk)
 
 // inbuilt primitive methods

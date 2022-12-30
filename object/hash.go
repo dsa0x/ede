@@ -53,6 +53,16 @@ func (a *Hash) Native() any {
 	return arr
 }
 
+// Update fulfill the Indexable interface
+func (a *Hash) Update(index, newVal Object) Object {
+	idx, ok := index.(*String)
+	if !ok {
+		return NewErrorWithMsg("cannot index a hash with a non-string value")
+	}
+	a.Entries[idx.Value] = newVal
+	return newVal
+}
+
 func (a *Hash) GetMethod(name string, eval Evaluator) *Builtin {
 	switch name {
 	case "contains":

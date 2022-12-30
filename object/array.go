@@ -45,8 +45,24 @@ func NewArray(arr []any) *Array {
 	return &Array{Entries: &entries}
 }
 
+// Items fulfill the Iterable interface
 func (a *Array) Items() []Object {
 	return *a.Entries
+}
+
+// Update fulfill the Indexable interface
+func (a *Array) Update(index, newVal Object) Object {
+	idx, ok := index.(*Int)
+	if !ok {
+		return NewErrorWithMsg("cannot index an array with a non-int value")
+	}
+
+	if idx.Value >= int64(len(*a.Entries)) {
+		return NewErrorWithMsg("index out of range")
+	}
+
+	(*a.Entries)[idx.Value] = newVal
+	return newVal
 }
 
 func (a *Array) Native() any {

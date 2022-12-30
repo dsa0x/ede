@@ -109,12 +109,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return &object.Set{Entries: entries}
 	case *ast.ReassignmentStmt:
-		if _, found := env.Get(node.Name.Value); !found {
-			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Name.Pos())
-		}
-		res := e.Eval(node.Expr, env)
-		env.Update(node.Name.Value, res)
-		return res
+		return e.evalReassignmentStmt(node, env)
 	case *ast.ForLoopStmt:
 		return e.evalForLoopStmt(node, env)
 	case *ast.ObjectMethodExpression:
@@ -224,6 +219,49 @@ func (e *Evaluator) evalImportStmt(node *ast.ImportStmt, env *object.Environment
 		return NULL
 	}
 	return object.NewErrorWithMsg("invalid import") //TODO improve error message
+}
+
+// Indexable defines an interface for objects that can be indexed
+type Indexable interface {
+	Update(object.Object, object.Object) object.Object
+}
+
+func (e *Evaluator) evalReassignmentStmt(node *ast.ReassignmentStmt, env *object.Environment) object.Object {
+	switch expr := node.Name.(type) {
+	case *ast.Identifier:
+		if _, found := env.Get(expr.Value); !found {
+			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", expr.Value), expr.Pos())
+		}
+		res := e.Eval(node.Expr, env)
+		env.Update(expr.Value, res)
+		return res
+	case *ast.IndexExpression:
+		// evaluate the left, the index, and then set the left[index] to the RHS of the reassignment
+		left := e.Eval(expr.Left, env)
+		if e.isError(left) {
+			return left
+		}
+		leftIndexable, ok := left.(Indexable)
+		if !ok {
+			return object.NewErrorWithMsg("object of type %T not indexable", left)
+		}
+		index := e.Eval(expr.Index, env)
+		if e.isError(index) {
+			return index
+		}
+		rhs := e.Eval(node.Expr, env)
+		if e.isError(rhs) {
+			return rhs
+		}
+
+		resp := leftIndexable.Update(index, rhs)
+		if e.isError(resp) {
+			return resp
+		}
+	default:
+		return object.NewErrorWithMsg("invalid reassignment")
+	}
+	return NULL
 }
 
 func (e *Evaluator) evalIfExpression(node *ast.IfStmt, env *object.Environment) object.Object {

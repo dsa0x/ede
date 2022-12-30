@@ -552,6 +552,13 @@ func TestEvalStatements(t *testing.T) {
 			age`,
 			result: 10.5,
 		},
+		{
+			input: `let arr = [1..10];
+			arr[2] = 100;
+			arr
+		`,
+			result: []any{1, 2, 100, 4, 5, 6, 7, 8, 9, 10},
+		},
 	}
 
 	for i, tt := range tests {
@@ -917,6 +924,24 @@ func TestEvalStatements_HashOperations(t *testing.T) {
 			foo
 			`,
 			result: 3,
+		},
+		{
+			input: `
+			let hash = {"a":"b","foo":2,"bar":3};
+			hash["foo"] = 100;
+			let foo = hash.get("foo");
+			foo
+			`,
+			result: 100,
+		},
+		{
+			input: `
+			let hash = {"a":"b","bar":3};
+			hash["foo"] = "hello";
+			let foo = hash.get("foo");
+			foo
+			`,
+			result: "hello",
 		},
 		{
 			input: `
