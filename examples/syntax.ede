@@ -42,31 +42,37 @@ println({"car":car})
 
 // conditionals
 if (arr.length() < 10) {
-    println("yay")
-} else {
     println("nay")
+} else {
+    println("yay")
 }
 
 // for loop
 for el = range arr {
-    printf("index","=", index)
-    println(", val", "=", el)
+    if (index < 2) {
+    println("index","=", index, ", val", "=", el)
+    }
 }
 
 // reserved keywords
 // let, nil, index, error, false, true
 
-// functions
-let add = func() {
+// functions and closures
+let add = func(arr) {
+    let len = arr.length()
+    if (len == 1) {
+        return arr[0]
+    }
     let sum = 0
     for el = range arr {
         sum += el
     }
-    return sum
+    arr = [arr[len-1]]
+    return sum + add(arr)
 }
 
 // function call
-let total = add()
+let total = add([1,2,3])
 println("total", "=", total)
 
 let arrk = [-10..-5].reverse()
