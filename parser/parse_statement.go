@@ -26,7 +26,8 @@ func (p *Parser) parseStmt() ast.Statement {
 	switch p.currToken.Type {
 	case token.LET:
 		if token.IsReservedKeyword(p.nextToken.Literal) {
-			p.addError(fmt.Sprintf("cannot assign to reserved keyword '%s'", p.nextToken.Literal))
+			err := NewParseError(fmt.Errorf("cannot assign to reserved keyword '%s'", p.nextToken.Literal), p.nextToken.Pos)
+			p.appendError(err)
 			return nil
 		}
 		return p.parseLetStmt()
@@ -43,7 +44,7 @@ func (p *Parser) parseStmt() ast.Statement {
 		p.advanceToken()
 		return p.parseStmt()
 	case token.SINGLE_COMMENT:
-		stmt := &ast.CommentStmt{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
+		stmt := &ast.CommentStmt{Token: p.currToken, Value: p.currToken.Literal}
 		p.advanceToken()
 		return stmt
 	case token.IMPORT:
@@ -53,12 +54,12 @@ func (p *Parser) parseStmt() ast.Statement {
 }
 
 func (p *Parser) parseLetStmt() *ast.LetStmt {
-	stmt := &ast.LetStmt{Token: p.currToken, ValuePos: p.pos}
+	stmt := &ast.LetStmt{Token: p.currToken}
 	if !p.advanceNextTokenIs(token.IDENT) { // eat LET token
 		p.addError(unexpectedTokenError(token.IDENT, p.nextToken.Literal))
 		return nil
 	}
-	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
+	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
 
 	if p.nextTokenIs(token.SEMICOLON) || p.nextTokenIs(token.NEWLINE) { // e.g let foo;
 		p.advanceToken()
@@ -75,7 +76,7 @@ func (p *Parser) parseLetStmt() *ast.LetStmt {
 	return stmt
 }
 func (p *Parser) parseReturnExpr() ast.Expression {
-	stmt := &ast.ReturnExpression{Token: p.currToken, ValuePos: p.pos}
+	stmt := &ast.ReturnExpression{Token: p.currToken}
 	if !p.advanceCurrTokenIs(token.RETURN) {
 		p.addError(unexpectedTokenError(token.RETURN, p.nextToken.Literal))
 		return nil
@@ -86,7 +87,7 @@ func (p *Parser) parseReturnExpr() ast.Expression {
 }
 
 func (p *Parser) parseIfStmt() *ast.IfStmt {
-	stmt := &ast.IfStmt{Token: p.currToken, ValuePos: p.pos}
+	stmt := &ast.IfStmt{Token: p.currToken}
 	stmt.Alternatives = make([]*ast.ConditionalStmt, 0)
 	if !p.advanceNextTokenIs(token.LPAREN) { // eat opening token IF
 		p.addError(unexpectedTokenError(token.LPAREN, p.nextToken.Literal))
@@ -107,7 +108,6 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 	stmt.Consequence = &ast.ConditionalStmt{
 		Condition: stmt.Condition,
 		Statement: p.parseBlockStmt(),
-		ValuePos:  p.pos,
 	}
 
 	if p.currTokenIs(token.ELSE) {
@@ -134,7 +134,7 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 
 				elifStmt := p.parseStmt()
 
-				condStmt := &ast.ConditionalStmt{Condition: condition, Statement: elifStmt, ValuePos: p.pos}
+				condStmt := &ast.ConditionalStmt{Condition: condition, Statement: elifStmt}
 				stmt.Alternatives = append(stmt.Alternatives, condStmt)
 
 				if !p.advanceCurrTokenIs(token.RBRACE) {
@@ -147,7 +147,7 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 					return nil
 				}
 				elseStmt := p.parseStmt()
-				condStmt := &ast.ConditionalStmt{Statement: elseStmt, ValuePos: p.pos}
+				condStmt := &ast.ConditionalStmt{Statement: elseStmt}
 				stmt.Alternatives = append(stmt.Alternatives, condStmt)
 
 				if !p.advanceCurrTokenIs(token.RBRACE) {
@@ -164,7 +164,7 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 }
 
 func (p *Parser) parseBlockStmt() *ast.BlockStmt {
-	blockStmt := &ast.BlockStmt{Statements: make([]ast.Statement, 0), ValuePos: p.pos}
+	blockStmt := &ast.BlockStmt{Statements: make([]ast.Statement, 0)}
 
 	for !p.currTokenIs(token.EOF) && !p.currTokenIs(token.RBRACE) {
 		if stmt := p.parseStmt(); stmt != nil {
@@ -186,7 +186,7 @@ func (p *Parser) parseBlockStmt() *ast.BlockStmt {
 }
 
 func (p *Parser) parseImportStmt() *ast.ImportStmt {
-	stmt := &ast.ImportStmt{ValuePos: p.pos, Token: p.currToken}
+	stmt := &ast.ImportStmt{Token: p.currToken}
 	p.advanceToken()
 	if !p.currTokenIs(token.IDENT) {
 		p.addError("invalid import statement")
@@ -198,7 +198,7 @@ func (p *Parser) parseImportStmt() *ast.ImportStmt {
 }
 
 func (p *Parser) parseMatchExpression() ast.Expression {
-	stmt := &ast.MatchExpression{ValuePos: p.pos, Token: p.currToken, Cases: make([]ast.MatchCase, 0)}
+	stmt := &ast.MatchExpression{Token: p.currToken, Cases: make([]ast.MatchCase, 0)}
 	if !p.advanceCurrTokenIs(token.MATCH) {
 		p.addError(unexpectedTokenError(token.MATCH, string(p.currToken.Type)))
 		return nil
@@ -252,7 +252,7 @@ outerloop:
 }
 
 func (p *Parser) parseForStmt() ast.Statement {
-	forLoopStmt := &ast.ForLoopStmt{Token: p.currToken, ValuePos: p.pos}
+	forLoopStmt := &ast.ForLoopStmt{Token: p.currToken}
 
 	if !p.advanceCurrTokenIs(token.FOR) {
 		p.addError(unexpectedTokenError(token.FOR, p.currToken.Literal))
@@ -262,7 +262,7 @@ func (p *Parser) parseForStmt() ast.Statement {
 		p.addError(unexpectedTokenError(token.IDENT, p.currToken.Literal))
 		return nil
 	}
-	forLoopStmt.Variable = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal, ValuePos: p.pos}
+	forLoopStmt.Variable = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
 	p.advanceToken()
 	if !p.advanceCurrTokenIs(token.ASSIGN) {
 		p.addError(unexpectedTokenError(token.ASSIGN, p.currToken.Literal))
@@ -307,7 +307,7 @@ func (p *Parser) parseExpressionStmt() *ast.ExpressionStmt {
 		p.addError("expected start of expression, found '%s'", p.currToken.Literal)
 		return nil
 	}
-	stmt := &ast.ExpressionStmt{Token: p.currToken, ValuePos: p.pos}
+	stmt := &ast.ExpressionStmt{Token: p.currToken}
 	stmt.Expr = p.parseExpr(LOWEST)
 
 	return stmt

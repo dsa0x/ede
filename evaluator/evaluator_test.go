@@ -596,7 +596,7 @@ func TestEvalStatements_Error(t *testing.T) {
 		{
 			input: `let arr = [2, ( + 5];
 		`,
-			result: []string{"expected closing parenthesis token ')', got ']'", "Line: 1"},
+			result: []string{"expected closing parenthesis token ')', got", "Line: 1"},
 		},
 		{
 			input: `let arr = [2, 3 +];
@@ -633,7 +633,6 @@ func TestEvalStatements_Error(t *testing.T) {
 			if !ok {
 				t.Fatalf("expected result of type *object.Error, got %T", evaluated)
 			}
-			fmt.Println(evaluated.Message)
 			for _, str := range tt.result {
 				if !strings.Contains(evaluated.Message, str) {
 					t.Fatalf("expected \"%s\" to contain error \"%s\"", evaluated.Message, str)
@@ -1116,13 +1115,17 @@ func TestEval(t *testing.T) {
 	let arr = [1..10];
 	`
 
-	input = `
-	println({"d":"dd","c":{"e":1}})
+	input = `let lang = "ede"
+	let lang_rev = ""
+	for i = range lang.reverse() {
+		rev += i
+	}
+	println(lang == lang_rev)
 	`
 
 	evaluated := testEval(input)
 	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {
-		t.FailNow()
+		t.Fatalf("%v", evaluated)
 	}
 }
 

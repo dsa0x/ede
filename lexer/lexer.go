@@ -15,11 +15,12 @@ type Lexer struct {
 	charStr string
 
 	line     int
+	column   int
 	startCol int
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: []byte(input)}
+	l := &Lexer{input: []byte(input), line: 1}
 	l.readChar()
 	return l
 }
@@ -35,6 +36,19 @@ func (l *Lexer) readChar() {
 	l.prevPos = l.currPos
 	l.currPos = l.readPos
 	l.readPos += 1
+
+	if l.char == byte(0) {
+		return
+	}
+
+	// if the previous line has ended, we increment the
+	// line count, and restart the column count
+	if l.input[l.prevPos] == byte('\n') {
+		l.line++
+		l.column = 1
+	} else {
+		l.column++
+	}
 }
 
 func (l *Lexer) readNChars(n int) {
@@ -45,19 +59,19 @@ func (l *Lexer) readNChars(n int) {
 
 func (l *Lexer) readIdent() []byte {
 	start := l.currPos
-	for l.isIdentifier(l.char) {
+	for l.isIdentifier(l.peekChar()) {
 		// if l.char == 34
 		l.readChar()
 	}
-	return l.input[start:l.currPos]
+	return l.input[start:l.readPos]
 }
 
 func (l *Lexer) readDigit() []byte {
 	start := l.currPos
-	for unicode.IsDigit(rune(l.char)) {
+	for unicode.IsDigit(rune(l.peekChar())) && !l.peekCharIs(byte(0)) {
 		l.readChar()
 	}
-	return l.input[start:l.currPos]
+	return l.input[start:l.readPos]
 }
 
 func (l *Lexer) readString() []byte {
@@ -92,7 +106,7 @@ func (l *Lexer) readSingleComment() []byte {
 	for !(l.peekCharIs(';') || l.peekCharIs('\n')) {
 		l.readChar()
 	}
-	l.readChar()
+	l.readChar() // read closing char (\n or ;)
 	return l.input[start:l.readPos]
 }
 
@@ -106,7 +120,7 @@ func (l *Lexer) readStruct() []byte {
 
 func (l *Lexer) peekChar() byte {
 	if l.readPos >= len(l.input) {
-		return '0'
+		return 0
 	}
 	return l.input[l.readPos]
 }
@@ -136,6 +150,7 @@ func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
 	l.eatWhitespace()
+	l.startCol = l.column // start of the token in the column
 
 	switch l.char {
 	case '=':
@@ -150,8 +165,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok = charTokens[l.char]
 	case '\n':
 		tok = charTokens[l.char]
-		l.line++
-		l.startCol = l.currPos // start of a new line
 	case '+':
 		if l.peekCharIs('+') {
 			l.readChar()
@@ -244,27 +257,34 @@ func (l *Lexer) NextToken() token.Token {
 			ident := l.readIdent()
 			tokenType := token.LookupIdent(string(ident))
 			tok = newToken(tokenType, ident...)
-			return tok
+			break
 		} else if unicode.IsDigit(rune(l.char)) {
 			digit := l.readDigit()
+			pos := l.CurrPos()
+			l.readChar() // reads the next char after the digit
 			if l.currCharIs('.') {
 				// if it is not float or list, then it's invalid
 				if !(l.peekCharIs('.') || unicode.IsDigit(rune(l.peekChar()))) {
-					return newToken(token.ILLEGAL, l.peekChar())
+					tok = newToken(token.ILLEGAL, l.peekChar())
+					tok.Pos = pos
+					return tok
 				}
 				if unicode.IsDigit(rune(l.peekChar())) {
 					l.readChar()
 					fraction := l.readDigit()
-					return newToken(token.FLOAT, append(append(digit, '.'), fraction...)...)
+					tok = newToken(token.FLOAT, append(append(digit, '.'), fraction...)...)
+					break
 				}
 			}
 			tok = newToken(token.INT, digit...)
-			return tok
+			tok.Pos = pos
+			return tok // because we read the next char above, we need to return so we dont read again
 		} else {
 			tok = newToken(token.ILLEGAL, l.char)
 		}
 	}
 
+	tok.Pos = l.CurrPos()
 	l.readChar()
 	return tok
 }
@@ -293,10 +313,10 @@ var charTokens = map[byte]token.Token{
 	'\n': newToken(token.NEWLINE, '\n'),
 }
 
-func (l *Lexer) Column() int {
-	return l.currPos - l.startCol
-}
+func (l *Lexer) CurrPos() token.Pos { return token.Pos{Line: l.line, Column: l.Column()} }
 
-func (l *Lexer) Line() int {
-	return l.line + 1
-}
+// Column is the current column of the lexer
+func (l *Lexer) Column() int { return l.startCol }
+
+// Line is the current line of the lexer
+func (l *Lexer) Line() int { return l.line }

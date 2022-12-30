@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"ede/token"
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
@@ -12,11 +13,11 @@ type parseError struct {
 	err    error
 }
 
-func NewParseError(err error, line, column int) *parseError {
+func NewParseError(err error, pos token.Pos) *parseError {
 	return &parseError{
 		err:    err,
-		line:   line,
-		column: column,
+		line:   pos.Line,
+		column: pos.Column,
 	}
 }
 
@@ -29,7 +30,11 @@ func (p *parseError) Error() string {
 }
 
 func (p *Parser) addError(msg string, format ...interface{}) {
-	p.errors = append(p.errors, NewParseError(fmt.Errorf(msg, format...), p.lexer.Line(), p.lexer.Column()))
+	p.errors = append(p.errors, NewParseError(fmt.Errorf(msg, format...), p.currPos()))
+}
+
+func (p *Parser) appendError(err error) {
+	p.errors = append(p.errors, err)
 }
 
 func unexpectedTokenError(exp, got string) string {

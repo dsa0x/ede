@@ -1,3 +1,6 @@
+// primitives
+// int, float, boolean, string, array, hash, nil
+
 // assignments
 let a = 100
 let b = "foo"
@@ -15,6 +18,7 @@ let d = (10 + (2 * 3))
 let bool = true || false
 let obj = {"d":d, "a":a, "bar":bar, "bool":bool}
 println({"obj":obj})
+let bool = !false
 
 // imports
 import json
@@ -42,11 +46,11 @@ if (arr.length() < 10) {
 // for loop
 for el = range arr {
     printf("index","=", index)
-    println("val", "=", el)
+    println(", val", "=", el)
 }
 
 // reserved keywords
-// let, nil, index
+// let, nil, index, error, false, true
 
 // functions
 let add = func() {
@@ -60,3 +64,11 @@ let add = func() {
 // function call
 let total = add()
 println("total", "=", total)
+
+// inbuilt primitive methods
+let lang = "ede"
+let lang_rev = ""
+for i = range lang.reverse() {
+    lang_rev += i
+}
+println(lang == lang_rev)

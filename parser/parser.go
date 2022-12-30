@@ -18,12 +18,8 @@ type (
 	}
 
 	Parser struct {
-		lexer *lexer.Lexer
-
-		pos       token.Pos
+		lexer     *lexer.Lexer
 		prevToken token.Token
-		// line      int
-		// column    int
 		currToken token.Token
 		nextToken token.Token
 
@@ -84,7 +80,8 @@ func (p *Parser) registerParseFns() {
 
 func (p *Parser) registerIllegalFns() {
 	ilFn := func() ast.Expression {
-		p.addError("illegal token '%s'", p.currToken.Literal)
+		err := fmt.Errorf("illegal token '%s'", p.currToken.Literal)
+		p.appendError(NewParseError(err, p.currToken.Pos))
 		return nil
 	}
 	ilFn2 := func(ast.Expression) ast.Expression { return ilFn() }
@@ -92,10 +89,7 @@ func (p *Parser) registerIllegalFns() {
 }
 
 func (p *Parser) Parse() *ast.Program {
-	prog := &ast.Program{
-		Statements: make([]ast.Statement, 0),
-		ValuePos:   p.pos,
-	}
+	prog := &ast.Program{Statements: make([]ast.Statement, 0)}
 	for !p.currTokenIs(token.EOF) {
 		if p.advanceCurrTokenIs(token.NEWLINE) { // ignore new line
 			continue
@@ -161,4 +155,8 @@ func (p *Parser) postfixParseFn(tok token.TokenType) func(ast.Expression) ast.Ex
 		return parseFn.postfix
 	}
 	return nil
+}
+
+func (p *Parser) currPos() token.Pos {
+	return p.currToken.Pos
 }

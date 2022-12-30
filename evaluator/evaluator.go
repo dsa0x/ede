@@ -105,7 +105,7 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Set{Entries: entries}
 	case *ast.ReassignmentStmt:
 		if _, found := env.Get(node.Name.Value); !found {
-			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Pos())
+			return e.EvalError(fmt.Sprintf("cannot reassign undeclared identifier '%s'", node.Name.Value), node.Name.Pos())
 		}
 		res := e.Eval(node.Expr, env)
 		env.Update(node.Name.Value, res)

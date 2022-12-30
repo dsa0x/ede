@@ -38,7 +38,7 @@ func (p *Parser) parseSetExpression(startPos token.Pos) ast.Expression {
 }
 
 func (p *Parser) parseObjectMethodExpression(obj ast.Expression) ast.Expression {
-	expr := &ast.ObjectMethodExpression{Token: p.currToken, Object: obj, ValuePos: p.pos}
+	expr := &ast.ObjectMethodExpression{Token: p.currToken, Object: obj}
 	p.advanceToken()
 	if !p.currTokenIs(token.IDENT) {
 		p.addError(unexpectedTokenError(token.IDENT, p.currToken.Literal))
@@ -59,7 +59,6 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	expr := &ast.PrefixExpression{
 		Operator: p.currToken.Literal,
 		Token:    p.currToken,
-		ValuePos: p.pos,
 	}
 
 	p.advanceToken()
@@ -71,7 +70,6 @@ func (p *Parser) parsePostfixExpression(left ast.Expression) ast.Expression {
 	expr := &ast.PostfixExpression{
 		Operator: p.currToken.Literal,
 		Token:    p.currToken,
-		ValuePos: p.pos,
 	}
 
 	p.advanceToken()
@@ -90,7 +88,6 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 		Operator: operator.Literal,
 		Left:     left,
 		Token:    operator,
-		ValuePos: p.pos,
 	}
 
 	operatorPrecedence := p.currPrecedence()
@@ -111,13 +108,13 @@ func (p *Parser) parseInfixOperator(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseIdent() ast.Expression {
-	expr := &ast.Identifier{Value: p.currToken.Literal, Token: p.currToken, ValuePos: p.pos}
+	expr := &ast.Identifier{Value: p.currToken.Literal, Token: p.currToken}
 	p.advanceToken()
 	return expr
 }
 
 func (p *Parser) parseFunctionLiteral() ast.Expression {
-	stmt := &ast.FunctionLiteral{Token: p.currToken, ValuePos: p.pos}
+	stmt := &ast.FunctionLiteral{Token: p.currToken}
 	if !p.advanceNextTokenIs(token.LPAREN) {
 		return nil
 	}
@@ -161,7 +158,7 @@ func (p *Parser) parseFunctionParams() []*ast.Identifier {
 func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 	var expr *ast.ReassignmentStmt
 	if id, ok := ident.(*ast.Identifier); ok {
-		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken, ValuePos: p.pos}
+		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
 	} else {
 		p.addError("unexpected token assignment: %s", ident.Literal())
 		return nil
@@ -182,7 +179,7 @@ func (p *Parser) parseReassignment(ident ast.Expression) ast.Expression {
 func (p *Parser) parsePlusEqual(ident ast.Expression) ast.Expression {
 	var expr *ast.ReassignmentStmt
 	if id, ok := ident.(*ast.Identifier); ok {
-		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken, ValuePos: p.pos}
+		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
 	} else {
 		p.addError("unexpected token assignment: %s", ident.Literal())
 		return nil
@@ -200,7 +197,6 @@ func (p *Parser) parsePlusEqual(ident ast.Expression) ast.Expression {
 
 	expr.Expr = &ast.InfixExpression{Left: ident,
 		Right:    p.parseExpr(LOWEST),
-		ValuePos: p.pos,
 		Operator: token.PLUS,
 	}
 	return expr
@@ -209,7 +205,7 @@ func (p *Parser) parsePlusEqual(ident ast.Expression) ast.Expression {
 func (p *Parser) parseMinusEqual(ident ast.Expression) ast.Expression {
 	var expr *ast.ReassignmentStmt
 	if id, ok := ident.(*ast.Identifier); ok {
-		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken, ValuePos: p.pos}
+		expr = &ast.ReassignmentStmt{Name: id, Token: p.currToken}
 	} else {
 		p.addError("unexpected token assignment: %s", ident.Literal())
 		return nil
@@ -227,7 +223,6 @@ func (p *Parser) parseMinusEqual(ident ast.Expression) ast.Expression {
 
 	expr.Expr = &ast.InfixExpression{Left: ident,
 		Right:    p.parseExpr(LOWEST),
-		ValuePos: p.pos,
 		Operator: token.MINUS,
 	}
 	return expr
@@ -238,7 +233,7 @@ func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 	if !ok {
 		return nil
 	}
-	expr := &ast.ArrayLiteral{Token: p.currToken, Elements: make([]ast.Expression, 0), ValuePos: p.pos}
+	expr := &ast.ArrayLiteral{Token: p.currToken, Elements: make([]ast.Expression, 0)}
 	if !p.advanceNextTokenIs(token.INT) {
 		p.addError(unexpectedTokenError(token.INT, p.nextToken.Literal))
 		return nil
@@ -249,7 +244,7 @@ func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 		return nil
 	}
 	for i := startL.Value; i <= endL.Value; i++ {
-		expr.Elements = append(expr.Elements, &ast.IntegerLiteral{Value: i, ValuePos: p.pos})
+		expr.Elements = append(expr.Elements, &ast.IntegerLiteral{Value: i})
 	}
 	if !p.currTokenIs(token.LBRACE) && !p.currTokenIs(token.RBRACKET) { // TODO: usage in forloop and array literal should be diff
 		return nil
@@ -259,7 +254,7 @@ func (p *Parser) parseRangeArray(start ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
-	expr := &ast.CallExpression{Function: fn, Token: p.currToken, ValuePos: p.pos}
+	expr := &ast.CallExpression{Function: fn, Token: p.currToken}
 
 	if !p.advanceCurrTokenIs(token.LPAREN) { // eat opening token
 		return nil
@@ -275,7 +270,7 @@ func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseHashLiteral() ast.Expression {
-	expr := &ast.HashLiteral{Token: p.currToken, ValuePos: p.pos, Pair: make(map[ast.Expression]ast.Expression)}
+	expr := &ast.HashLiteral{Token: p.currToken, Pair: make(map[ast.Expression]ast.Expression)}
 
 	keySet := map[any]ast.Expression{}
 	if !p.advanceCurrTokenIs(token.LBRACE) { // eat opening token
