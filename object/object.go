@@ -21,6 +21,7 @@ var (
 	HASH_OBJ         Type = "HASH"
 	SET_OBJ          Type = "SET"
 	IMPORT_OBJ       Type = "IMPORT"
+	TIME_OBJ         Type = "TIME"
 
 	NIL   = &Nil{}
 	TRUE  = NewBoolean(true)

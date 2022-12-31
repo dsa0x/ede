@@ -6,16 +6,18 @@ import (
 )
 
 type JSONModule struct {
-	name        string
 	functions   map[string]*object.Builtin
-	environment object.Environment
+	environment *object.Environment
+	evaluator   object.Evaluator
 }
 
 func (j *JSONModule) Name() string { return "json" }
 
 func (j *JSONModule) Functions() map[string]*object.Builtin { return j.functions }
 
-func (j *JSONModule) Init() {
+func (j *JSONModule) Init(evaluator object.Evaluator, env *object.Environment) {
+	j.evaluator = evaluator
+	j.environment = env
 	j.functions = map[string]*object.Builtin{
 		"parse":  j.Parse(),
 		"string": j.String(),

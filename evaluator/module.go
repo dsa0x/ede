@@ -7,10 +7,11 @@ import (
 
 var modules = map[string]object.Module{}
 
-func init() {
+func InitModules(eval object.Evaluator, env *object.Environment) {
 	modules["json"] = &module.JSONModule{}
+	modules["time"] = &module.TimeModule{}
 
 	for _, mod := range modules {
-		mod.Init()
+		mod.Init(eval, env)
 	}
 }

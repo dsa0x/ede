@@ -2,17 +2,18 @@ package object
 
 type Module interface {
 	Name() string
-	Init()
+	Init(Evaluator, *Environment)
 	Functions() map[string]*Builtin
 }
 
 type Import struct {
-	Module Module
-	Name   string
+	Module    Module
+	Evaluator Evaluator
+	Name      string
 }
 
-func NewImport(mod Module) *Import {
-	return &Import{Module: mod, Name: mod.Name()}
+func NewImport(mod Module, eval Evaluator) *Import {
+	return &Import{Module: mod, Name: mod.Name(), Evaluator: eval}
 }
 
 func (a *Import) GetMethod(name string, eval Evaluator) *Builtin {
@@ -31,7 +32,3 @@ func (v *Import) Equal(obj Object) bool {
 func (a *Import) Native() any {
 	return a.Module.Name()
 }
-
-// func NewModule(name string, environment *Environment) *Module {
-// 	return &Module{Name: name, Environment: *environment}
-// }

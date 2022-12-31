@@ -1394,14 +1394,50 @@ func TestEval(t *testing.T) {
 	let arr = [1..10];
 	`
 
-	input = `let arrk = [-10..-5].reverse()
-	println(arrk)
-	let arr = arrk[arrk.length()-1]
-	println(arr)
+	input = `
+	import time
+	
+	let t = time.parse("2022-10-10","2006-01-02")
+	println("t",t)
 	`
 
 	evaluated := testEval(input)
 	if !testObject(t, evaluated, []string{"2", "4", "foofoo"}) {
 		t.Fatalf("%v", evaluated)
+	}
+}
+
+func BenchmarkEval(b *testing.B) {
+	b.Skip()
+	input := `
+	import time
+
+	let skynet = func(num, size, div) {
+		if (size == 1) { 
+			return num;
+		}
+		let tasks = []
+		let sz = size / div
+		let sum = 0
+		for i = range [0..div-1] {
+			let sub_num = num + i * sz
+			sum += skynet(sub_num, sz, div)
+		}
+		return sum
+	}
+	let start = time.now()
+	let res = skynet(0, 1000000, 10);
+	let end = time.now()
+	let diff = end.sub(start, {"unit":"ms"})
+	println("ans:", res)
+	println("duration", diff.string() + "ms")
+	`
+
+	input = `
+	let arr = [1..10];
+	`
+
+	for i := 0; i < b.N; i++ {
+		testEval(input)
 	}
 }

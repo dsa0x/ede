@@ -33,17 +33,10 @@ func Execute(input string) error {
 		fmt.Println(prog.ParseErrors)
 		return prog.ParseErrors
 	}
-	eval := (&evaluator.Evaluator{}).Eval(prog, env)
+	e := evaluator.New()
+	eval := e.Eval(prog, env)
 	if eval != nil {
 		fmt.Println(eval.Inspect())
 	}
 	return nil
-}
-
-func unwrappedError(errs []error) error {
-	var err error
-	for _, e := range errs {
-		err = fmt.Errorf("%s, %w", err, e)
-	}
-	return err
 }

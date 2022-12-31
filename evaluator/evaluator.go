@@ -23,6 +23,11 @@ type Evaluator struct {
 	errStack error
 }
 
+// New returns a new Evaluator
+func New() *Evaluator {
+	return &Evaluator{}
+}
+
 // Eval walks through the AST and evaluates the nodes into an object
 func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 	if node == nil {
@@ -215,10 +220,10 @@ func (e *Evaluator) evalImportStmt(node *ast.ImportStmt, env *object.Environment
 	}
 
 	if mod, ok := modules[node.Value]; ok {
-		env.Set(node.Value, object.NewImport(mod))
+		env.Set(node.Value, object.NewImport(mod, e))
 		return NULL
 	}
-	return object.NewErrorWithMsg("invalid import") //TODO improve error message
+	return object.NewErrorWithMsg("invalid import. module %s not found", node.Value) //TODO improve error message
 }
 
 // Indexable defines an interface for objects that can be indexed

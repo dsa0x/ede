@@ -9,6 +9,7 @@ import (
 
 func (e *Evaluator) evalProgram(node *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
+	InitModules(e, env)
 
 	if node.ParseErrors != nil {
 		return object.NewError(node.ParseErrors)

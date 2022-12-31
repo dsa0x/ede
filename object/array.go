@@ -367,6 +367,10 @@ func CountArgumentError(exp string, got int) *Error {
 	return NewError(fmt.Errorf("expected %s argument(s), got %d", exp, got))
 }
 
+func TypeError(exp, got Type) *Error {
+	return NewError(fmt.Errorf("expected type %s, got %s", exp, got))
+}
+
 func methodExpectArgumentError(methodName, argType, gotType string) *Error {
 	return NewError(fmt.Errorf("method '%s' expects a %s argument, got %s", methodName, argType, gotType))
 }
