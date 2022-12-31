@@ -1,0 +1,21 @@
+import time
+
+let skynet = func(num, size, div) {
+    if (size == 1) { 
+        return num;
+    }
+    let tasks = []
+    let sz = size / div
+    let sum = 0
+    for i = range [0..div-1] {
+        let sub_num = num + i * sz
+        sum += skynet(sub_num, sz, div)
+    }
+    return sum
+}
+let start = time.now()
+let res = skynet(0, 1000000, 10);
+let end = time.now()
+let diff = end.sub(start, {"unit":"ms"})
+println("ans:", res)
+println("duration", diff.string() + "ms")
