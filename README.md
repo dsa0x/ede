@@ -37,7 +37,5 @@ Ede supports syntax highlighting for vscode. To enable it, copy the folder `ede-
 ## Tasks
 
 - [ ] Set algebra
-- [ ] Date type
-- [ ] Modules
-- [x] Syntax highlighting
+- [ ] Compile to bytecode
 - [ ] Is Type (e.g. is string, is number, is bool)
