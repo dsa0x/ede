@@ -80,6 +80,7 @@ const (
 	FALSE       = "FALSE"
 	FOR         = "FOR"
 	RANGE       = "RANGE"
+	NIL         = "NIL"
 )
 
 var (
@@ -106,6 +107,7 @@ var keywords = map[string]TokenType{
 	"case":          CASE,
 	"default":       DEFAULT,
 	"object":        IDENT,
+	"nil":           NIL,
 	IndexIdentifier: IDENT,
 
 	// inbuilt types

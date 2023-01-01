@@ -48,6 +48,7 @@ func (p *Parser) registerParseFns() {
 	p.parseFns[token.FALSE] = parseFn{prefix: p.parseBool}
 	p.parseFns[token.IDENT] = parseFn{prefix: p.parseIdent}
 	p.parseFns[token.STRING] = parseFn{prefix: p.parseStringLiteral}
+	p.parseFns[token.NIL] = parseFn{prefix: p.parseNilLiteral}
 	p.parseFns[token.BANG] = parseFn{prefix: p.parsePrefixExpression}
 	p.parseFns[token.PLUS] = parseFn{prefix: p.parsePrefixExpression, infix: p.parseInfixOperator}
 	p.parseFns[token.MINUS] = parseFn{prefix: p.parsePrefixExpression, infix: p.parseInfixOperator}

@@ -98,6 +98,11 @@ type (
 		Value string
 	}
 
+	NilLiteral struct {
+		Token token.Token
+		Value string
+	}
+
 	IntegerLiteral struct {
 		Token token.Token
 		Value int64
@@ -203,6 +208,7 @@ func (s *CommentStmt) stmtNode()            {}
 func (s *ForLoopStmt) stmtNode()            {}
 func (s *ConditionalStmt) stmtNode()        {}
 func (s *StringLiteral) stmtNode()          {}
+func (s *NilLiteral) stmtNode()             {}
 func (s *IntegerLiteral) stmtNode()         {}
 func (s *ArrayLiteral) stmtNode()           {}
 func (s *RangeArrayLiteral) stmtNode()      {}
@@ -224,6 +230,7 @@ func (s *ObjectMethodExpression) stmtNode() {}
 func (s *MatchExpression) stmtNode()        {}
 
 func (s *StringLiteral) exprNode()          {}
+func (s *NilLiteral) exprNode()             {}
 func (s *FunctionLiteral) exprNode()        {}
 func (s *IntegerLiteral) exprNode()         {}
 func (s *ArrayLiteral) exprNode()           {}
@@ -251,6 +258,7 @@ func (s *CommentStmt) Pos() token.Pos            { return s.Token.Pos }
 func (s *ConditionalStmt) Pos() token.Pos        { return s.Token.Pos }
 func (s *ForLoopStmt) Pos() token.Pos            { return s.Token.Pos }
 func (s *StringLiteral) Pos() token.Pos          { return s.Token.Pos }
+func (s *NilLiteral) Pos() token.Pos             { return s.Token.Pos }
 func (s *FunctionLiteral) Pos() token.Pos        { return s.Token.Pos }
 func (s *IntegerLiteral) Pos() token.Pos         { return s.Token.Pos }
 func (s *ArrayLiteral) Pos() token.Pos           { return s.Token.Pos }
@@ -280,6 +288,7 @@ func (s *CommentStmt) Literal() string       { return "" } // TODO
 func (s *ConditionalStmt) Literal() string   { return "" } // TODO
 func (s *ForLoopStmt) Literal() string       { return s.Token.Literal }
 func (s *StringLiteral) Literal() string     { return s.Value }
+func (s *NilLiteral) Literal() string        { return s.Value }
 func (s *FunctionLiteral) Literal() string   { return s.Token.Literal } //TODO
 func (s *IntegerLiteral) Literal() string    { return fmt.Sprint(s.Value) }
 func (s *ArrayLiteral) Literal() string      { return "" } // TODO
@@ -315,6 +324,7 @@ func (s *CommentStmt) TokenType() token.TokenType            { return s.Token.Ty
 func (s *ForLoopStmt) TokenType() token.TokenType            { return s.Token.Type }
 func (s *ConditionalStmt) TokenType() token.TokenType        { return s.Token.Type }
 func (s *StringLiteral) TokenType() token.TokenType          { return s.Token.Type }
+func (s *NilLiteral) TokenType() token.TokenType             { return s.Token.Type }
 func (s *FunctionLiteral) TokenType() token.TokenType        { return s.Token.Type }
 func (s *IntegerLiteral) TokenType() token.TokenType         { return s.Token.Type }
 func (s *ArrayLiteral) TokenType() token.TokenType           { return s.Token.Type }

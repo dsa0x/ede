@@ -43,6 +43,8 @@ func (e *Evaluator) Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Float{Value: node.Value}
 	case *ast.BooleanLiteral:
 		return object.NewBoolean(node.Value)
+	case *ast.NilLiteral:
+		return &object.Nil{}
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.IfStmt:

@@ -1,4 +1,5 @@
 import json
+import time
 
 let fib = func(num) {
     if (num == 0 || num == 1){
@@ -7,8 +8,9 @@ let fib = func(num) {
     return fib(num-1) + fib(num-2)
 }
 
-let str = match (json.parse("{foo:bar")) {
-    case error: println("ignoring error")
-}
-
-println(fib(10), "= 55")
+let diff = nil
+let start = time.now()
+println(fib(10))
+let end = time.now()
+diff = end.sub(start, {"unit":"ms"})
+println("duration", diff.string() + "ms")

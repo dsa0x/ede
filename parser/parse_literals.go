@@ -56,3 +56,9 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	p.advanceToken()
 	return expr
 }
+
+func (p *Parser) parseNilLiteral() ast.Expression {
+	expr := &ast.NilLiteral{Value: p.currToken.Literal, Token: p.currToken}
+	p.advanceToken()
+	return expr
+}
